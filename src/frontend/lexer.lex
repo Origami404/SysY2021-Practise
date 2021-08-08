@@ -1,5 +1,6 @@
 %{
 #include "util.h"
+#include "parser.y.tab.h"
 
 // 维护行号地跳过 C-Style 注释
 void skip_c_style_comment(void) {
