@@ -18,6 +18,15 @@ void skip_c_style_comment(void) {
     }
 }
 
+void deal_with_putf(void) {
+    const char *str_start = strchr(yytext, '"');
+    const char *str_end   = strchr(str_start, '"') + 1;
+    const size_t count    = str_end - str_start;
+
+    yylval.sval = checked_malloc(count + 1);
+    memcpy(yylval.sval, str_start, count);
+    yylval.sval[count] = '\0';
+}
 
 %}
 
@@ -71,6 +80,8 @@ return    { return T_RETURN;   }
 "&&"  { return T_LOG_AND; }
 "||"  { return T_LOG_OR;  }
 
+putf[\t\n]*"("\".*\",  { deal_with_putf(); return T_PUTF; }
+
 [a-zA-Z_][0-9a-zA-Z_]* { yylval.sval = String(yytext); return T_IDENT; }
 
 [1-9][0-9]*            { yylval.ival = (int)strtol(yytext, 0, 0); return T_NUM; }
@@ -79,4 +90,5 @@ return    { return T_RETURN;   }
  
 \".*\"                 { yylval.sval = String(yytext); return T_STRING; }
 
+.                      { panic("Unknown token: %s", yytexxt); }
 %%
