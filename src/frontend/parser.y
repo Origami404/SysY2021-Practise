@@ -75,7 +75,8 @@ Stmt: LVal T_ASSIGN Exp T_SEMICOCLON
     | T_BREAK      T_SEMICOCLON
     | T_CONTINUE   T_SEMICOCLON
     | T_RETURN     T_SEMICOCLON
-    | T_RETURN Exp T_SEMICOCLON;
+    | T_RETURN Exp T_SEMICOCLON
+    | PutfForm;
 
 Block: T_CURLY_LEFT BlockItemList T_CURLY_RIGHT ;
 BlockItemList: BlockItem BlockItemList | /* Empty */ ;
@@ -135,3 +136,4 @@ ArrIdx: T_SQU_LEFT Exp T_SQU_RIGHT ArrIdx
 FuncArgs: LVal
           | LVal T_COMMA FuncArgs;
 
+PutfForm: T_PUTF T_PAREN_LEFT T_STR T_COMMA FuncArgs T_PAREN_RIGHT T_SEMICOCLON
