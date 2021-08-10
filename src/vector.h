@@ -20,7 +20,7 @@ void  vec_concat_cpy(vector *v, vector *other);
 void  vec_concat_mov(vector *v, vector *other);
 void  vec_add(vector *v, void *data);
 void  vec_pop(vector *v);
-void const* vec_get(vector *v, int idx);
+void* vec_get(vector *v, int idx);
 void  vec_set(vector *v, int idx, void *data);
 
 void vec_destory(vector *v);
