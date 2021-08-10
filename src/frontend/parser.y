@@ -24,8 +24,8 @@ extern int yylex();
 
 %token T_COMMA ":"        T_SEMICOCLON ";"
 %token T_PAREN_LEFT "("   T_PAREN_RIGHT ")"
-%token T_BRACKET_LEFT "[" T_BRACKET_RIGHT "]"
-%token T_BRACE_LEFT "{"   T_BRACE_RIGHT "}"
+%token T_SQU_LEFT "[" T_SQU_RIGHT "]"
+%token T_CURLY_LEFT "{"   T_CURLY_RIGHT "}"
 
 %token T_ASSIGN "="
 %token T_ADD "+" T_MINUS "-" T_MUL "*" T_DIVIDE "/" T_MOD "%"
@@ -39,15 +39,91 @@ extern int yylex();
 
 %%
 
-// CompUnit : Decl CompUnit
-//          | FuncDef CompUnit
-//          | /* Empty */
-//          ;
+//---------------------------- Stmt ---------------------------
 
-// Decl : ConstDecl
-//      | VarDecl
-//      ;
+Stmt: LVal T_ASSIGN Exp T_SEMICOCLON
+    | Exp T_SEMICOCLON
+    | T_SEMICOCLON
+    | Block
+    | IfStmt
+    | WhileStmt
+    | T_BREAK      T_SEMICOCLON
+    | T_CONTINUE   T_SEMICOCLON
+    | T_RETURN     T_SEMICOCLON
+    | T_RETURN Exp T_SEMICOCLON
+    ;
 
-// ConstDecl : 
+Block: T_CURLY_LEFT StmtList T_CURLY_RIGHT
+     ;
 
-Number : T_NUM {  }
+StmtList: Stmt StmtList
+        | /* Empty */
+        ;
+
+IfStmt: T_IF T_PAREN_LEFT Cond T_PAREN_RIGHT Stmt
+      | T_IF T_PAREN_LEFT Cond T_PAREN_RIGHT Stmt T_ELSE Stmt
+      ;
+
+WhileStmt: T_WHILE T_PAREN_LEFT Cond T_PAREN_RIGHT Stmt
+         ;
+
+
+
+//----------------- Expression ---------------------------- 
+
+Exp : AddExp
+Cond: LOrExp
+
+LOrExp: LAndExp
+      |  LOrExp T_LOG_OR LAndExp
+      ;
+
+LAndExp: EqExp
+       | LAndExp T_LOG_AND EqExp
+       ;
+
+EqExp: RelExp
+     | EqExp T_EQ RelExp
+     | EqExp T_NOT_EQ RelExp
+     ;
+
+RelExp: AddExp
+      | RelExp T_LESS       AddExp
+      | RelExp T_LESS_EQ    AddExp
+      | RelExp T_GREATER    AddExp
+      | RelExp T_GREATER_EQ AddExp
+      ;
+
+AddExp: MulExp
+      | AddExp T_ADD MulExp
+      | AddExp T_MUL MulExp
+      ;
+
+MulExp: UnaryExp
+      | MulExp T_MUL    UnaryExp
+      | MulExp T_DIVIDE UnaryExp
+      | MulExp T_MOD    UnaryExp
+      ;
+
+UnaryExp: PrimaryExp
+        | T_IDENT T_PAREN_LEFT FuncParams T_PAREN_RIGHT
+        | T_ADD     UnaryExp 
+        | T_MINUS   UnaryExp
+        | T_LOG_NOT UnaryExp
+        ;
+
+PrimaryExp: T_PAREN_LEFT Exp T_PAREN_RIGHT
+          | LVal
+          | T_NUM
+
+LVal: T_IDENT ArrIdx 
+    ;
+
+ArrIdx: T_SQU_LEFT Exp T_SQU_RIGHT ArrIdx
+      | /* empty */
+      ;
+
+FuncParams: LVal
+          | LVal T_COMMA FuncParams
+          ;
+
