@@ -56,10 +56,10 @@ return    { return T_RETURN;   }
 ";"  { return T_SEMICOCLON;    }
 "("  { return T_PAREN_LEFT;    }
 ")"  { return T_PAREN_RIGHT;   }
-"["  { return T_BRACKET_LEFT;  }
-"]"  { return T_BRACKET_RIGHT; }
-"{"  { return T_BRACE_LEFT;    }
-"}"  { return T_BRACE_RIGHT;   }
+"["  { return T_SQU_LEFT;  }
+"]"  { return T_SQU_RIGHT; }
+"{"  { return T_CURLY_LEFT;    }
+"}"  { return T_CURLY_RIGHT;   }
 
 "="  { return T_ASSIGN; }
 
