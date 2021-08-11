@@ -46,8 +46,8 @@ CompUnit: Decl CompUnit
         ; 
 
 //---------------- Declaration & Definition ----------------------------
-FuncDef: FuncRetType T_IDENT "(" FuncParamList ")" Block
-FuncRetType: "void" | "int" ;
+FuncDef: "int"  T_IDENT "(" FuncParamList ")" Block
+       | "void" T_IDENT "(" FuncParamList ")" Block;
 FuncParamList: FuncParam
              | FuncParam "," FuncParamList;
 FuncParam: "int" LVal;
