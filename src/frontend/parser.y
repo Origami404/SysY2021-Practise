@@ -1,7 +1,8 @@
 %{
 
 #include "util.h"
-#include "parser.y.tab.h"
+#include "parser.tab.h"
+#include "ast.h"
 
 extern int yylex();
 
@@ -15,14 +16,14 @@ extern int yylex();
 
 // %token <FieldNameInUnion> TerminalName "Comment"
 
-%token <sval> T_IDENT "identifier" T_STR "string literal" T_PUTF "Special form: putf"
+%token <sval> T_IDENT "identifier" T_STR "string literal" T_PUTF "putf"
 %token <ival> T_NUM   "number literal" 
 
-%token T_CONST "'const'"  T_INT  "'int'"       T_VOID     "'void'"
-%token T_IF    "'if'"     T_ELSE "'else'"      T_WHILE    "'while'"
-%token T_BREAK "'break'"  T_RETURN "'return'"  T_CONTINUE "'continue'"
+%token T_CONST "const"  T_INT  "int"       T_VOID     "void"
+%token T_IF    "if"     T_ELSE "else"      T_WHILE    "while"
+%token T_BREAK "break"  T_RETURN "return"  T_CONTINUE "continue"
 
-%token T_COMMA ":"        T_SEMICOCLON ";"
+%token T_COMMA ","        T_SEMICOCLON ";"
 %token T_PAREN_LEFT "("   T_PAREN_RIGHT ")"
 %token T_SQU_LEFT "[" T_SQU_RIGHT "]"
 %token T_CURLY_LEFT "{"   T_CURLY_RIGHT "}"
@@ -42,50 +43,51 @@ extern int yylex();
 CompUnit: Decl CompUnit
         | FuncDef CompUnit
         | /* empty */
-        ;
+        ; 
 
 //---------------- Declaration & Definition ----------------------------
-FuncDef: FuncRetType T_IDENT T_PAREN_LEFT FuncParamList T_PAREN_RIGHT Block
-FuncRetType: T_VOID | T_INT ;
+FuncDef: FuncRetType T_IDENT "(" FuncParamList ")" Block
+FuncRetType: "void" | "int" ;
 FuncParamList: FuncParam
-             | FuncParam T_COMMA FuncParamList;
-FuncParam: T_INT LVal;
+             | FuncParam "," FuncParamList;
+FuncParam: "int" LVal;
 
-Decl: T_CONST T_INT Def
-    | T_INT Def;
+Decl: "const" "int" Def
+    | "int" Def;
 
 Def: LVal
-   | LVal T_ASSIGN InitVal
-   | LVal T_COMMA Def
-   | LVal T_ASSIGN InitVal T_COMMA Def;
+   | LVal "=" InitVal
+   | LVal "," Def
+   | LVal "=" InitVal "," Def;
 
 InitVal: Exp
-       | T_CURLY_LEFT ArrInit T_CURLY_RIGHT;
+       | "{" ArrInit "}";
 ArrInit: InitVal 
-       | InitVal T_COMMA ArrInit;
+       | InitVal "," ArrInit;
 
 //---------------------------- Stmt ---------------------------
 
-Stmt: LVal T_ASSIGN Exp T_SEMICOCLON
-    | Exp T_SEMICOCLON
-    | T_SEMICOCLON
+Stmt: LVal "=" Exp ";"
+    | Exp ";"
+    | ";"
     | Block
     | IfStmt
     | WhileStmt
-    | T_BREAK      T_SEMICOCLON
-    | T_CONTINUE   T_SEMICOCLON
-    | T_RETURN     T_SEMICOCLON
-    | T_RETURN Exp T_SEMICOCLON
-    | PutfForm;
+    | "break"      ";"
+    | "continue"   ";"
+    | "return"     ";"
+    | "return" Exp ";"
+    | PutfForm
+    ;
 
-Block: T_CURLY_LEFT BlockItemList T_CURLY_RIGHT ;
+Block: "{" BlockItemList "}" ;
 BlockItemList: BlockItem BlockItemList | /* Empty */ ;
 BlockItem: Decl | Stmt ;
 
-IfStmt: T_IF T_PAREN_LEFT Cond T_PAREN_RIGHT Stmt
-      | T_IF T_PAREN_LEFT Cond T_PAREN_RIGHT Stmt T_ELSE Stmt;
+IfStmt: "if" "(" Cond ")" Stmt
+      | "if" "(" Cond ")" Stmt "else" Stmt;
 
-WhileStmt: T_WHILE T_PAREN_LEFT Cond T_PAREN_RIGHT Stmt;
+WhileStmt: "while" "(" Cond ")" Stmt;
 
 
 
@@ -95,45 +97,45 @@ Exp : AddExp;
 Cond: LOrExp;
 
 LOrExp: LAndExp
-      |  LOrExp T_LOG_OR LAndExp;
+      |  LOrExp "||" LAndExp;
 
 LAndExp: EqExp
-       | LAndExp T_LOG_AND EqExp;
+       | LAndExp "&&" EqExp;
 
 EqExp: RelExp
-     | EqExp T_EQ RelExp
-     | EqExp T_NOT_EQ RelExp;
+     | EqExp "==" RelExp
+     | EqExp "!=" RelExp;
 
 RelExp: AddExp
-      | RelExp T_LESS       AddExp
-      | RelExp T_LESS_EQ    AddExp
-      | RelExp T_GREATER    AddExp
-      | RelExp T_GREATER_EQ AddExp;
+      | RelExp "<"  AddExp
+      | RelExp "<=" AddExp
+      | RelExp ">"  AddExp
+      | RelExp ">="  AddExp;
 
 AddExp: MulExp
-      | AddExp T_ADD MulExp
-      | AddExp T_MUL MulExp;
+      | AddExp "+" MulExp
+      | AddExp "-" MulExp;
 
 MulExp: UnaryExp
-      | MulExp T_MUL    UnaryExp
-      | MulExp T_DIVIDE UnaryExp
-      | MulExp T_MOD    UnaryExp;
+      | MulExp "*" UnaryExp
+      | MulExp "/" UnaryExp
+      | MulExp "%" UnaryExp;
 
 UnaryExp: PrimaryExp
-        | T_IDENT T_PAREN_LEFT FuncArgs T_PAREN_RIGHT
-        | T_ADD     UnaryExp 
-        | T_MINUS   UnaryExp
-        | T_LOG_NOT UnaryExp;
+        | T_IDENT "(" FuncArgs ")"
+        | "+" UnaryExp 
+        | "-" UnaryExp
+        | "!" UnaryExp;
 
-PrimaryExp: T_PAREN_LEFT Exp T_PAREN_RIGHT
+PrimaryExp: "(" Exp ")"
           | LVal
           | T_NUM;
 
 LVal: T_IDENT ArrIdx;
-ArrIdx: T_SQU_LEFT Exp T_SQU_RIGHT ArrIdx
+ArrIdx: "[" Exp "]" ArrIdx
       | /* empty */;
 
 FuncArgs: LVal
-          | LVal T_COMMA FuncArgs;
+        | LVal "," FuncArgs;
 
-PutfForm: T_PUTF T_PAREN_LEFT T_STR T_COMMA FuncArgs T_PAREN_RIGHT T_SEMICOCLON
+PutfForm: "putf" "(" T_STR "," FuncArgs ")" ";"

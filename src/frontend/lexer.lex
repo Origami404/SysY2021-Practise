@@ -1,6 +1,6 @@
 %{
 #include "util.h"
-#include "parser.y.tab.h"
+#include "parser.tab.h"
 
 // 维护行号地跳过 C-Style 注释
 void skip_c_style_comment(void) {
@@ -88,7 +88,7 @@ putf[\t\n]*"("\".*\",  { deal_with_putf(); return T_PUTF; }
 0[0-7]*                { yylval.ival = (int)strtol(yytext, 0, 0); return T_NUM; }
 0(x|X)[0-9a-fA-F]*     { yylval.ival = (int)strtol(yytext, 0, 0); return T_NUM; }
  
-\".*\"                 { yylval.sval = String(yytext); return T_STRING; }
+\".*\"                 { yylval.sval = String(yytext); return T_STR; }
 
-.                      { panic("Unknown token: %s", yytexxt); }
+.                      { panic("Unknown token: %s", yytext); }
 %%
