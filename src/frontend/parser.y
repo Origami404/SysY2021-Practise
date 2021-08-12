@@ -82,8 +82,8 @@ extern int yylex();
 
 %%
 
-CompUnit: Decl CompUnit     { $$ = cons(NodeList, $1, $2); }
-        | FuncDef CompUnit  { $$ = cons(NodeList, $1, $2); } 
+CompUnit: Decl CompUnit     { $$ = cons_NodeList($1, $2);  }
+        | FuncDef CompUnit  { $$ = cons_NodeList($1, $2);  } 
         | /* empty */       { $$ = 0;                      }
         ; 
 
@@ -91,8 +91,8 @@ CompUnit: Decl CompUnit     { $$ = cons(NodeList, $1, $2); }
 FuncDef: "int"  T_IDENT "(" FuncParamList ")" Block { $$ = ast_FuncDef(FRT_INT, $2, $4, $Block);  }
        | "void" T_IDENT "(" FuncParamList ")" Block { $$ = ast_FuncDef(FRT_VOID, $2, $4, $Block); }
        ;
-FuncParamList: FuncParam                   { $$ = cons(FuncParamList, $1, 0);  }
-             | FuncParam "," FuncParamList { $$ = cons(FuncParamList, $1, $3); }
+FuncParamList: FuncParam                   { $$ = cons_FuncParamList($1, 0);   }
+             | FuncParam "," FuncParamList { $$ = cons_FuncParamList($1, $3);  }
              ;
 FuncParam: "int" LVal { $$ = ast_FuncParam($LVal); }
          ;
@@ -105,15 +105,15 @@ DefOne: LVal                       { $$ = ast_VarDef($1, 0);  }
       | LVal "=" InitVal           { $$ = ast_VarDef($1, $3); }
       ;
 
-DefAny: DefOne                     { $$ = cons(VarDefList, $1, 0);  }
-      | DefOne "," DefAny          { $$ = cons(VarDefList, $1, $3); }
+DefAny: DefOne                     { $$ = cons_VarDefList($1, 0);   }
+      | DefOne "," DefAny          { $$ = cons_VarDefList($1, $3);  }
       ;
 
 InitVal: Exp                    { $$ = ast_InitExp($Exp); }
        | "{" ArrInit "}"        { $$ = ast_InitArr($2);   }
        ;
-ArrInit: InitVal                { $$ = cons(ArrayInitList, $1, 0);  }
-       | InitVal "," ArrInit    { $$ = cons(ArrayInitList, $1, $3); }
+ArrInit: InitVal                { $$ = cons_ArrayInitList($1, 0);   }
+       | InitVal "," ArrInit    { $$ = cons_ArrayInitList($1, $3);  }
        ;   
 
 //---------------------------- Stmt ---------------------------
@@ -133,8 +133,8 @@ Stmt: Block
 
 Block: "{" BlockItemList "}"        { $$ = ast_Block($2); }
      ;
-BlockItemList: Decl BlockItemList   { $$ = cons(BlockItemList, $1, $2); }
-             | Stmt BlockItemList   { $$ = cons(BlockItemList, $1, $2); }
+BlockItemList: Decl BlockItemList   { $$ = cons_BlockItemList($1, $2);  }
+             | Stmt BlockItemList   { $$ = cons_BlockItemList($1, $2);  }
              | /* Empty */          { $$ = 0;                           }
              ;
 
@@ -199,11 +199,11 @@ PrimaryExp: "(" Exp ")"   { $$ = $2               }
 LVal: T_IDENT ArrIdx { $$ = ast_LVal($1, $2); }
     ;
 
-ArrIdx: ArrIdx "[" Exp "]"   { $$ = cons(ExpList, $3, $1); }
+ArrIdx: ArrIdx "[" Exp "]"   { $$ = cons_ExpList($3, $1);  }
       | /* empty */          { $$ = 0;                     }
       ;
 
-FuncArgs: LVal               { $$ = cons(ExpList, $1, 0);  }
-        | LVal "," FuncArgs  { $$ = cons(ExpList, $1, $3); }
+FuncArgs: LVal               { $$ = cons_ExpList($1, 0);   }
+        | LVal "," FuncArgs  { $$ = cons_ExpList($1, $3);  }
         ;
 
