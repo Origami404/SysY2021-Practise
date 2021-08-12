@@ -81,6 +81,10 @@ Ast_FuncCallExp ast_FuncCallExp(Ast_LVal func, ExpList *args);
 
 //------------------ BlockItem --------------------------
 
+typedef struct Ast_BlockItem {
+    Ast_Node super;
+} *Ast_BlockItem;
+
 typedef struct Ast_Init {
     Ast_Node super;
 } *Ast_Init;
@@ -114,7 +118,7 @@ Ast_VarDef ast_VarDef(Ast_LVal lval, Ast_Init init);
 
 DEF_LIST(VarDefList, Ast_VarDef)
 typedef struct Ast_Decl {
-    Ast_Node super;
+    Ast_BlockItem super;
 
     // BType btype;
     bool is_const;
@@ -151,16 +155,16 @@ Ast_FuncDef ast_FuncDef(FuncRetType ret_type,
 //----------------------- Block & Stmt --------------------
 
 typedef struct Ast_Stmt {
-    Ast_Node super;
+    Ast_BlockItem super;
 } *Ast_Stmt;
 
-DEF_LIST(StmtList, Ast_Stmt)
+DEF_LIST(BlockItemList, Ast_BlockItem)
 typedef struct Ast_Block {
     Ast_Stmt super;
 
-    StmtList *stmts;
+    BlockItemList *stmts;
 } *Ast_Block;
-Ast_Block ast_Block(StmtList *stmts);
+Ast_Block ast_Block(BlockItemList *stmts);
 
 typedef struct Ast_ExpStmt {
     Ast_Stmt super;
@@ -185,6 +189,11 @@ typedef struct Ast_WhileStmt {
     Ast_Stmt body;
 } *Ast_WhileStmt;
 Ast_WhileStmt ast_WhileStmt(Ast_ExpNode cond, Ast_Stmt body);
+
+typedef struct Ast_EmptyStmt {
+    Ast_Stmt super;
+} *Ast_EmptyStmt;
+Ast_EmptyStmt ast_EmptyStmt(void);
 
 typedef struct Ast_BreakStmt {
     Ast_Stmt super;
