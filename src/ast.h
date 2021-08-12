@@ -5,7 +5,7 @@
 #include "list.h"
 
 typedef enum Ast_OpType {
-    OP_ADD, OP_SUB,  OP_MUL,  OP_DIVIDE,  OP_MOD, 
+    OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_MOD, 
     OP_EQ,  OP_NOT_EQ, OP_LESS, OP_LESS_EQ, OP_GREATER, OP_GREATER_EQ, 
     OP_LOG_NOT, OP_LOG_AND, OP_LOG_OR
 } *Ast_OpType;
@@ -23,9 +23,9 @@ typedef struct Ast_LVal {
     Ast_Node super;
 
     string name;
-    ExpList *index;
+    ExpList index;
 } *Ast_LVal;
-Ast_LVal ast_LVal(string name, ExpList *indx);
+Ast_LVal ast_LVal(string name, ExpList indx);
 
 //--------------- Expression ------------------------
 
@@ -68,17 +68,17 @@ typedef struct Ast_SpecFormPutf {
     Ast_ExpNode super;
 
     string format;
-    ExpList *args;
+    ExpList args;
 } *Ast_SpecFormPutf;
-Ast_SpecFormPutf ast_SpecFormPutf(string format, ExpList *args);
+Ast_SpecFormPutf ast_SpecFormPutf(string format, ExpList args);
 
 typedef struct Ast_FuncCallExp {
     Ast_ExpNode super;
 
     Ast_LVal func;
-    ExpList *args;
+    ExpList args;
 } *Ast_FuncCallExp;
-Ast_FuncCallExp ast_FuncCallExp(Ast_LVal func, ExpList *args);
+Ast_FuncCallExp ast_FuncCallExp(Ast_LVal func, ExpList args);
 
 
 //------------------ BlockItem --------------------------
@@ -102,9 +102,9 @@ DEF_LIST(ArrayInitList, Ast_Init)
 typedef struct Ast_InitArr {
     Ast_Init super;
 
-    ArrayInitList *subs;
+    ArrayInitList subs;
 } *Ast_InitArr;
-Ast_InitArr ast_InitArr(ArrayInitList *subs);
+Ast_InitArr ast_InitArr(ArrayInitList subs);
 
 // typedef enum BType {
 //     BT_INT = 1
@@ -124,9 +124,9 @@ typedef struct Ast_Decl {
 
     // BType btype;
     bool is_const;
-    VarDefList *defs;
+    VarDefList defs;
 } *Ast_Decl;
-Ast_Decl ast_Decl(bool is_const, VarDefList *defs);
+Ast_Decl ast_Decl(bool is_const, VarDefList defs);
 
 
 typedef struct Ast_FuncParam {
@@ -146,12 +146,12 @@ typedef struct Ast_FuncDef {
 
     FuncRetType ret_type;
     string func;
-    FuncParamList *params;
+    FuncParamList params;
     struct Ast_Block *body;
 } *Ast_FuncDef;
 Ast_FuncDef ast_FuncDef(FuncRetType ret_type, 
                         string func, 
-                        FuncParamList *params, 
+                        FuncParamList params, 
                         struct Ast_Block *body);
 
 //----------------------- Block & Stmt --------------------
@@ -160,13 +160,15 @@ typedef struct Ast_Stmt {
     Ast_BlockItem super;
 } *Ast_Stmt;
 
+DEF_LIST(StmtList, Ast_Stmt)
+
 DEF_LIST(BlockItemList, Ast_BlockItem)
 typedef struct Ast_Block {
     Ast_Stmt super;
 
-    BlockItemList *stmts;
+    BlockItemList stmts;
 } *Ast_Block;
-Ast_Block ast_Block(BlockItemList *stmts);
+Ast_Block ast_Block(BlockItemList stmts);
 
 typedef struct Ast_ExpStmt {
     Ast_Stmt super;

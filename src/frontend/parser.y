@@ -24,13 +24,13 @@ extern int yylex();
     Ast_FuncDef func_def;
     Ast_FuncParam func_param;
 
-    NodeList       *node_list;
-    ArrayInitList  *arr_init_list;
-    BlockItemLIst  *block_item_list;
-    ExpList        *exp_list;
-    VarDefList     *var_def_list;
-    FuncParamList  *func_param_list;
-    StmtList       *stmt_list;
+    NodeList       node_list;
+    ArrayInitList  arr_init_list;
+    BlockItemList  block_item_list;
+    ExpList        exp_list;
+    VarDefList     var_def_list;
+    FuncParamList  func_param_list;
+    StmtList       stmt_list;
 }
 
 // %token <FieldNameInUnion> TerminalName "Comment"
@@ -128,7 +128,7 @@ Stmt: Block
     | "break"      ";"    { $$ = ast_BreakStmt();         }
     | "continue"   ";"    { $$ = ast_ContinueStmt();      }
     | "return"     ";"    { $$ = ast_ReturnStmt(0);       }
-    | "return" Exp ";"    { $$ = ast_BreakStmt($Exp);     }
+    | "return" Exp ";"    { $$ = ast_ReturnStmt($Exp);    }
     ;
 
 Block: "{" BlockItemList "}"        { $$ = ast_Block($2); }
@@ -191,7 +191,7 @@ UnaryExp: PrimaryExp
         | "!" UnaryExp             { $$ = ast_UnaryExp(OP_LOG_NOT, $2); }
         ;       
 
-PrimaryExp: "(" Exp ")"   { $$ = $2               }
+PrimaryExp: "(" Exp ")"   { $$ = $2;              }
           | LVal          { $$ = ast_LValExp($1); }
           | T_NUM         { $$ = ast_Number($1);  }
           ;
