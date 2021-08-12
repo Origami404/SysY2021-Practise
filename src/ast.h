@@ -14,6 +14,8 @@ typedef struct Ast_Node {
     
 } *Ast_Node;
 
+DEF_LIST(NodeList, Ast_Node)
+
 //--------------- Basic -----------------------------
 DEF_LIST(ExpList, Ast_ExpNode)
 
@@ -143,14 +145,14 @@ typedef struct Ast_FuncDef {
     Ast_Node super;
 
     FuncRetType ret_type;
-    Ast_LVal func;
+    string func;
     FuncParamList *params;
     struct Ast_Block *body;
 } *Ast_FuncDef;
 Ast_FuncDef ast_FuncDef(FuncRetType ret_type, 
-                         Ast_LVal func, 
-                         FuncParamList *params, 
-                         struct Ast_Block *body);
+                        string func, 
+                        FuncParamList *params, 
+                        struct Ast_Block *body);
 
 //----------------------- Block & Stmt --------------------
 

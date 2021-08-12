@@ -19,7 +19,12 @@ extern int yylex();
     Ast_Block block;
     Ast_BlockItem block_item;
     Ast_Stmt stmt;
+    Ast_VarDef var_def;
+    Ast_Decl decl;
+    Ast_FuncDef func_def;
+    Ast_FuncParam func_param;
 
+    NodeList       *node_list;
     ArrayInitList  *arr_init_list;
     BlockItemLIst  *block_item_list;
     ExpList        *exp_list;
@@ -51,6 +56,19 @@ extern int yylex();
 %token T_LOG_NOT "!" T_LOG_AND "&&" T_LOG_OR "||"
 
 
+%type <node_list> CompUnit
+
+%type <func_def> FuncDef
+%type <func_param> FuncParam
+%type <func_param_list> FuncParamList
+
+%type <decl> Decl
+
+%type <var_def> DefOne
+%type <var_def_list> DefAny
+
+%type <init> InitVal
+%type <arr_init_list> ArrInit
 
 %type <stmt> Stmt Block IfStmt WhileStmt PutfForm
 %type <block_item_list> BlockItemList
@@ -64,38 +82,47 @@ extern int yylex();
 
 %%
 
-CompUnit: Decl CompUnit
-        | FuncDef CompUnit
-        | /* empty */
+CompUnit: Decl CompUnit     { $$ = cons(NodeList, $1, $2); }
+        | FuncDef CompUnit  { $$ = cons(NodeList, $1, $2); } 
+        | /* empty */       { $$ = 0;                      }
         ; 
 
 //---------------- Declaration & Definition ----------------------------
-FuncDef: "int"  T_IDENT "(" FuncParamList ")" Block
-       | "void" T_IDENT "(" FuncParamList ")" Block;
-FuncParamList: FuncParam
-             | FuncParam "," FuncParamList;
-FuncParam: "int" LVal;
+FuncDef: "int"  T_IDENT "(" FuncParamList ")" Block { $$ = ast_FuncDef(FRT_INT, $2, $4, $Block);  }
+       | "void" T_IDENT "(" FuncParamList ")" Block { $$ = ast_FuncDef(FRT_VOID, $2, $4, $Block); }
+       ;
+FuncParamList: FuncParam                   { $$ = cons(FuncParamList, $1, 0);  }
+             | FuncParam "," FuncParamList { $$ = cons(FuncParamList, $1, $3); }
+             ;
+FuncParam: "int" LVal { $$ = ast_FuncParam($LVal); }
+         ;
 
-Decl: "const" "int" Def
-    | "int" Def;
+Decl: "const" "int" DefAny  { $$ = ast_Decl(true, $DefAny);  }
+    | "int" DefAny          { $$ = ast_Decl(false, $DefAny); }
+    ; 
 
-Def: LVal
-   | LVal "=" InitVal
-   | LVal "," Def
-   | LVal "=" InitVal "," Def;
+DefOne: LVal                       { $$ = ast_VarDef($1, 0);  }
+      | LVal "=" InitVal           { $$ = ast_VarDef($1, $3); }
+      ;
 
-InitVal: Exp
-       | "{" ArrInit "}";
-ArrInit: InitVal 
-       | InitVal "," ArrInit;
+DefAny: DefOne                     { $$ = cons(VarDefList, $1, 0);  }
+      | DefOne "," DefAny          { $$ = cons(VarDefList, $1, $3); }
+      ;
+
+InitVal: Exp                    { $$ = ast_InitExp($Exp); }
+       | "{" ArrInit "}"        { $$ = ast_InitArr($2);   }
+       ;
+ArrInit: InitVal                { $$ = cons(ArrayInitList, $1, 0);  }
+       | InitVal "," ArrInit    { $$ = cons(ArrayInitList, $1, $3); }
+       ;   
 
 //---------------------------- Stmt ---------------------------
 
-Stmt: Exp ";"
-    | Block
+Stmt: Block
     | IfStmt
     | WhileStmt
-    | PutfForm    
+    | PutfForm   
+    | Exp ";"             { $$ = ast_ExpStmt($Exp);       }
     | LVal "=" Exp ";"    { $$ = ast_Assign($LVal, $Exp); }
     | ";"                 { $$ = ast_EmptyStmt();         }
     | "break"      ";"    { $$ = ast_BreakStmt();         }
