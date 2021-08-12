@@ -64,9 +64,9 @@ return    { return T_RETURN;   }
 "="  { return T_ASSIGN; }
 
 "+"  { return T_ADD;     }
-"-"  { return T_MINUS;   }
+"-"  { return T_SUB;   }
 "*"  { return T_MUL;     }
-"/"  { return T_DIVIDE;  }
+"/"  { return T_DIV;  }
 "%"  { return T_MOD;     }
 
 "=="  { return T_EQ;         }
