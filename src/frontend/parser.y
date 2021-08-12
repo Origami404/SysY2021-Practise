@@ -17,9 +17,11 @@ extern int yylex();
     Ast_Init init;
     Ast_LVal lval;
     Ast_Block block;
+    Ast_BlockItem block_item;
     Ast_Stmt stmt;
 
     ArrayInitList  *arr_init_list;
+    BlockItemLIst  *block_item_list;
     ExpList        *exp_list;
     VarDefList     *var_def_list;
     FuncParamList  *func_param_list;
@@ -49,7 +51,11 @@ extern int yylex();
 %token T_LOG_NOT "!" T_LOG_AND "&&" T_LOG_OR "||"
 
 
-%type <exp> PutfForm PrimaryExp UnaryExp MulExp AddExp 
+
+%type <stmt> Stmt Block IfStmt WhileStmt PutfForm
+%type <block_item_list> BlockItemList
+
+%type <exp> PrimaryExp UnaryExp MulExp AddExp 
 %type <exp> RelExp EqExp LAndExp LOrExp Cond Exp
 %type <lval> LVal
 %type <exp_list> ArrIdx FuncArgs
@@ -85,29 +91,35 @@ ArrInit: InitVal
 
 //---------------------------- Stmt ---------------------------
 
-Stmt: LVal "=" Exp ";"
-    | Exp ";"
-    | ";"
+Stmt: Exp ";"
     | Block
     | IfStmt
     | WhileStmt
-    | "break"      ";"
-    | "continue"   ";"
-    | "return"     ";"
-    | "return" Exp ";"
-    | PutfForm
+    | PutfForm    
+    | LVal "=" Exp ";"    { $$ = ast_Assign($LVal, $Exp); }
+    | ";"                 { $$ = ast_EmptyStmt();         }
+    | "break"      ";"    { $$ = ast_BreakStmt();         }
+    | "continue"   ";"    { $$ = ast_ContinueStmt();      }
+    | "return"     ";"    { $$ = ast_ReturnStmt(0);       }
+    | "return" Exp ";"    { $$ = ast_BreakStmt($Exp);     }
     ;
 
-Block: "{" BlockItemList "}" ;
-BlockItemList: BlockItem BlockItemList | /* Empty */ ;
-BlockItem: Decl | Stmt ;
+Block: "{" BlockItemList "}"        { $$ = ast_Block($2); }
+     ;
+BlockItemList: Decl BlockItemList   { $$ = cons(BlockItemList, $1, $2); }
+             | Stmt BlockItemList   { $$ = cons(BlockItemList, $1, $2); }
+             | /* Empty */          { $$ = 0;                           }
+             ;
 
-IfStmt: "if" "(" Cond ")" Stmt
-      | "if" "(" Cond ")" Stmt "else" Stmt;
+IfStmt: "if" "(" Cond ")" Stmt             { $$ = ast_IfStmt($Cond, $5, 0); }
+      | "if" "(" Cond ")" Stmt "else" Stmt { $$ = ast_IfStmt($Cond, $5, $7); }
+      ;
 
-WhileStmt: "while" "(" Cond ")" Stmt;
+WhileStmt: "while" "(" Cond ")" Stmt { $$ = ast_WhileStmt($Cond, $Stmt); }
+         ;
 
-
+PutfForm: "putf" "(" T_STR "," FuncArgs ")" ";" { $$ = ast_SpecFormPutf($3, $5); }
+        ; 
 
 //----------------- Expression ---------------------------- 
 
@@ -168,5 +180,3 @@ FuncArgs: LVal               { $$ = cons(ExpList, $1, 0);  }
         | LVal "," FuncArgs  { $$ = cons(ExpList, $1, $3); }
         ;
 
-PutfForm: "putf" "(" T_STR "," FuncArgs ")" ";" { $$ = ast_SpecFormPutf($3, $5); }
-        ; 
