@@ -13,24 +13,8 @@ extern int yylex();
     int ival;
     string sval;
 
-    Ast_ExpNode exp;
-    Ast_Init init;
-    Ast_LVal lval;
-    Ast_Block block;
-    Ast_BlockItem block_item;
-    Ast_Stmt stmt;
-    Ast_VarDef var_def;
-    Ast_Decl decl;
-    Ast_FuncDef func_def;
-    Ast_FuncParam func_param;
-
-    NodeList       node_list;
-    ArrayInitList  arr_init_list;
-    BlockItemList  block_item_list;
-    ExpList        exp_list;
-    VarDefList     var_def_list;
-    FuncParamList  func_param_list;
-    StmtList       stmt_list;
+    Ast_Node node;
+    ListAst node_list;
 }
 
 // %token <FieldNameInUnion> TerminalName "Comment"
@@ -58,32 +42,31 @@ extern int yylex();
 
 %type <node_list> CompUnit
 
-%type <func_def> FuncDef
-%type <func_param> FuncParam
-%type <func_param_list> FuncParamList
+%type <node> FuncDef FuncParam
+%type <node_list> FuncParamList
 
-%type <decl> Decl
+%type <node> Decl
 
-%type <var_def> DefOne
-%type <var_def_list> DefAny
+%type <node> DefOne
+%type <node_list> DefAny
 
-%type <init> InitVal
-%type <arr_init_list> ArrInit
+%type <node> InitVal
+%type <node_list> ArrInit
 
-%type <stmt> Stmt Block IfStmt WhileStmt PutfForm
-%type <block_item_list> BlockItemList
+%type <node> Stmt Block IfStmt WhileStmt PutfForm
+%type <node_list> BlockItemList
 
-%type <exp> PrimaryExp UnaryExp MulExp AddExp 
-%type <exp> RelExp EqExp LAndExp LOrExp Cond Exp
-%type <lval> LVal
-%type <exp_list> ArrIdx FuncArgs
+%type <node> PrimaryExp UnaryExp MulExp AddExp 
+%type <node> RelExp EqExp LAndExp LOrExp Cond Exp
+%type <node> LVal
+%type <node_list> ArrIdx FuncArgs
 
 %start CompUnit
 
 %%
 
-CompUnit: Decl CompUnit     { $$ = cons_NodeList($1, $2);  }
-        | FuncDef CompUnit  { $$ = cons_NodeList($1, $2);  } 
+CompUnit: Decl CompUnit     { $$ = cons_Ast($1, $2);  }
+        | FuncDef CompUnit  { $$ = cons_Ast($1, $2);  } 
         | /* empty */       { $$ = 0;                      }
         ; 
 
@@ -91,10 +74,10 @@ CompUnit: Decl CompUnit     { $$ = cons_NodeList($1, $2);  }
 FuncDef: "int"  T_IDENT "(" FuncParamList ")" Block { $$ = ast_FuncDef(FRT_INT, $2, $4, $Block);  }
        | "void" T_IDENT "(" FuncParamList ")" Block { $$ = ast_FuncDef(FRT_VOID, $2, $4, $Block); }
        ;
-FuncParamList: FuncParam                   { $$ = cons_FuncParamList($1, 0);   }
-             | FuncParam "," FuncParamList { $$ = cons_FuncParamList($1, $3);  }
+FuncParamList: FuncParam                   { $$ = cons_Ast($1, 0);   }
+             | FuncParam "," FuncParamList { $$ = cons_Ast($1, $3);  }
              ;
-FuncParam: "int" LVal { $$ = ast_FuncParam($LVal); }
+FuncParam: "int" LVal { $$ = $LVal; }
          ;
 
 Decl: "const" "int" DefAny  { $$ = ast_Decl(true, $DefAny);  }
@@ -105,15 +88,15 @@ DefOne: LVal                       { $$ = ast_VarDef($1, 0);  }
       | LVal "=" InitVal           { $$ = ast_VarDef($1, $3); }
       ;
 
-DefAny: DefOne                     { $$ = cons_VarDefList($1, 0);   }
-      | DefOne "," DefAny          { $$ = cons_VarDefList($1, $3);  }
+DefAny: DefOne                     { $$ = cons_Ast($1, 0);   }
+      | DefOne "," DefAny          { $$ = cons_Ast($1, $3);  }
       ;
 
 InitVal: Exp                    { $$ = ast_InitExp($Exp); }
        | "{" ArrInit "}"        { $$ = ast_InitArr($2);   }
        ;
-ArrInit: InitVal                { $$ = cons_ArrayInitList($1, 0);   }
-       | InitVal "," ArrInit    { $$ = cons_ArrayInitList($1, $3);  }
+ArrInit: InitVal                { $$ = cons_Ast($1, 0);   }
+       | InitVal "," ArrInit    { $$ = cons_Ast($1, $3);  }
        ;   
 
 //---------------------------- Stmt ---------------------------
@@ -122,30 +105,30 @@ Stmt: Block
     | IfStmt
     | WhileStmt
     | PutfForm   
-    | Exp ";"             { $$ = ast_ExpStmt($Exp);       }
-    | LVal "=" Exp ";"    { $$ = ast_Assign($LVal, $Exp); }
-    | ";"                 { $$ = ast_EmptyStmt();         }
-    | "break"      ";"    { $$ = ast_BreakStmt();         }
-    | "continue"   ";"    { $$ = ast_ContinueStmt();      }
-    | "return"     ";"    { $$ = ast_ReturnStmt(0);       }
-    | "return" Exp ";"    { $$ = ast_ReturnStmt($Exp);    }
+    | Exp ";"             { $$ = ast_StmtExp($Exp);       }
+    | LVal "=" Exp ";"    { $$ = ast_StmtAssign($1, $3);  }
+    | ";"                 { $$ = ast_StmtEmpty();         }
+    | "break"      ";"    { $$ = ast_StmtBreak();         }
+    | "continue"   ";"    { $$ = ast_StmtContinue();      }
+    | "return"     ";"    { $$ = ast_StmtReturn(0);       }
+    | "return" Exp ";"    { $$ = ast_StmtReturn($Exp);    }
     ;
 
 Block: "{" BlockItemList "}"        { $$ = ast_Block($2); }
      ;
-BlockItemList: Decl BlockItemList   { $$ = cons_BlockItemList($1, $2);  }
-             | Stmt BlockItemList   { $$ = cons_BlockItemList($1, $2);  }
+BlockItemList: Decl BlockItemList   { $$ = cons_Ast($1, $2);  }
+             | Stmt BlockItemList   { $$ = cons_Ast($1, $2);  }
              | /* Empty */          { $$ = 0;                           }
              ;
 
-IfStmt: "if" "(" Cond ")" Stmt             { $$ = ast_IfStmt($Cond, $5, 0); }
-      | "if" "(" Cond ")" Stmt "else" Stmt { $$ = ast_IfStmt($Cond, $5, $7); }
+IfStmt: "if" "(" Cond ")" Stmt             { $$ = ast_StmtIf($Cond, $5, 0); }
+      | "if" "(" Cond ")" Stmt "else" Stmt { $$ = ast_StmtIf($Cond, $5, $7); }
       ;
 
-WhileStmt: "while" "(" Cond ")" Stmt { $$ = ast_WhileStmt($Cond, $Stmt); }
+WhileStmt: "while" "(" Cond ")" Stmt { $$ = ast_StmtWhile($Cond, $Stmt); }
          ;
 
-PutfForm: "putf" "(" T_STR "," FuncArgs ")" ";" { $$ = ast_SpecFormPutf($3, $5); }
+PutfForm: "putf" "(" T_STR "," FuncArgs ")" ";" { $$ = ast_ExpPutf($3, $5); }
         ; 
 
 //----------------- Expression ---------------------------- 
@@ -154,56 +137,56 @@ Exp : AddExp;
 Cond: LOrExp;
 
 LOrExp: LAndExp
-      |  LOrExp "||" LAndExp { $$ = ast_BinaryExp(OP_LOG_OR, $1, $3); }
+      |  LOrExp "||" LAndExp { $$ = ast_ExpOp(OP_LOG_OR, $1, $3); }
       ;
 
 LAndExp: EqExp
-       | LAndExp "&&" EqExp { $$ = ast_BinaryExp(OP_LOG_AND, $1, $3); }
+       | LAndExp "&&" EqExp { $$ = ast_ExpOp(OP_LOG_AND, $1, $3); }
        ;
 
 EqExp: RelExp
-     | EqExp "==" RelExp { $$ = ast_BinaryExp(OP_EQ,     $1, $3); }
-     | EqExp "!=" RelExp { $$ = ast_BinaryExp(OP_NOT_EQ, $1, $3); }
+     | EqExp "==" RelExp { $$ = ast_ExpOp(OP_EQ,     $1, $3); }
+     | EqExp "!=" RelExp { $$ = ast_ExpOp(OP_NOT_EQ, $1, $3); }
      ; 
 
 RelExp: AddExp
-      | RelExp "<"  AddExp { $$ = ast_BinaryExp(OP_LESS,       $1, $3); }
-      | RelExp "<=" AddExp { $$ = ast_BinaryExp(OP_LESS_EQ,    $1, $3); }
-      | RelExp ">"  AddExp { $$ = ast_BinaryExp(OP_GREATER,    $1, $3); }
-      | RelExp ">=" AddExp { $$ = ast_BinaryExp(OP_GREATER_EQ, $1, $3); }
+      | RelExp "<"  AddExp { $$ = ast_ExpOp(OP_LESS,       $1, $3); }
+      | RelExp "<=" AddExp { $$ = ast_ExpOp(OP_LESS_EQ,    $1, $3); }
+      | RelExp ">"  AddExp { $$ = ast_ExpOp(OP_GREATER,    $1, $3); }
+      | RelExp ">=" AddExp { $$ = ast_ExpOp(OP_GREATER_EQ, $1, $3); }
       ;
 
 AddExp: MulExp
-      | AddExp "+" MulExp  { $$ = ast_BinaryExp(OP_ADD, $1, $3); }
-      | AddExp "-" MulExp  { $$ = ast_BinaryExp(OP_SUB, $1, $3); }
+      | AddExp "+" MulExp  { $$ = ast_ExpOp(OP_ADD, $1, $3); }
+      | AddExp "-" MulExp  { $$ = ast_ExpOp(OP_SUB, $1, $3); }
       ; 
 
 MulExp: UnaryExp
-      | MulExp "*" UnaryExp   { $$ = ast_BinaryExp(OP_MUL, $1, $3); }
-      | MulExp "/" UnaryExp   { $$ = ast_BinaryExp(OP_DIV, $1, $3); }  
-      | MulExp "%" UnaryExp   { $$ = ast_BinaryExp(OP_MOD, $1, $3); }
+      | MulExp "*" UnaryExp   { $$ = ast_ExpOp(OP_MUL, $1, $3); }
+      | MulExp "/" UnaryExp   { $$ = ast_ExpOp(OP_DIV, $1, $3); }  
+      | MulExp "%" UnaryExp   { $$ = ast_ExpOp(OP_MOD, $1, $3); }
       ;
 
 UnaryExp: PrimaryExp               
-        | T_IDENT "(" FuncArgs ")" { $$ = ast_FuncCallExp($1, $3);      }
-        | "+" UnaryExp             { $$ = ast_UnaryExp(OP_SUB, $2);     }
-        | "-" UnaryExp             { $$ = ast_UnaryExp(OP_ADD, $2);     }
-        | "!" UnaryExp             { $$ = ast_UnaryExp(OP_LOG_NOT, $2); }
+        | T_IDENT "(" FuncArgs ")" { $$ = ast_ExpFuncCall($1, $3);      }
+        | "+" UnaryExp             { $$ = ast_ExpOp(OP_SUB, $2, 0);     }
+        | "-" UnaryExp             { $$ = ast_ExpOp(OP_ADD, $2, 0);     }
+        | "!" UnaryExp             { $$ = ast_ExpOp(OP_LOG_NOT, $2, 0); }
         ;       
 
 PrimaryExp: "(" Exp ")"   { $$ = $2;              }
-          | LVal          { $$ = ast_LValExp($1); }
-          | T_NUM         { $$ = ast_Number($1);  }
+          | LVal          { $$ = ast_ExpLval($1); }
+          | T_NUM         { $$ = ast_ExpNum($1);  }
           ;
 
-LVal: T_IDENT ArrIdx { $$ = ast_LVal($1, $2); }
+LVal: T_IDENT ArrIdx { $$ = ast_Lval($1, $2); }
     ;
 
-ArrIdx: ArrIdx "[" Exp "]"   { $$ = cons_ExpList($3, $1);  }
+ArrIdx: ArrIdx "[" Exp "]"   { $$ = cons_Ast($3, $1);  }
       | /* empty */          { $$ = 0;                     }
       ;
 
-FuncArgs: LVal               { $$ = cons_ExpList($1, 0);   }
-        | LVal "," FuncArgs  { $$ = cons_ExpList($1, $3);  }
+FuncArgs: LVal               { $$ = cons_Ast($1, 0);   }
+        | LVal "," FuncArgs  { $$ = cons_Ast($1, $3);  }
         ;
 
