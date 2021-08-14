@@ -1,5 +1,6 @@
 #define VECTOR_DEF 1
-#include "vector.h"
+
+#include "util.h"
 
 typedef struct vector {
     void *data;
@@ -8,6 +9,8 @@ typedef struct vector {
 
     size_t rlen;
 } vector;
+
+#include "vector.h"
 
 vector* vec_create(data_spec spec) {
     vector *v = checked_malloc(sizeof(*v));
@@ -89,7 +92,7 @@ void* vec_get(vector *v, int idx) {
     if (idx < 0)
         idx += len;
 
-    return (char)v->data + idx;
+    return (char*)v->data + idx;
 }
 
 void vec_set(vector *v, int idx, void *data) {
