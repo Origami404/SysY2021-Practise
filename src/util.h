@@ -25,6 +25,6 @@ typedef uint64_t u64;
 void _panic(char const *file, int line, char const *fmt, ...);
 
 void* checked_malloc(size_t s);
-void checked_realloc(void *data, size_t s);
+void* checked_realloc(void *data, size_t s);
 
 #endif // HEADER_UTIL_H__
