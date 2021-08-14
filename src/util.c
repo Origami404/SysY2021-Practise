@@ -27,4 +27,5 @@ void* checked_malloc(size_t s) {
 void* checked_realloc(void *data, size_t s) {
     void *p = realloc(data, s);
     if (!p) panic("Memory error");
+    return p;
 }
