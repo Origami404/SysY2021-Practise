@@ -1,10 +1,14 @@
 %{
 
 #include "util.h"
-#include "parser.tab.h"
 #include "ast.h"
+#include "parser.tab.h"
 
 extern int yylex();
+
+void yyerror(char const* s) {
+    panic("Yacc error: %s", s);
+}
 
 %}
 
@@ -168,7 +172,7 @@ MulExp: UnaryExp
       ;
 
 UnaryExp: PrimaryExp               
-        | T_IDENT "(" FuncArgs ")" { $$ = ast_ExpFuncCall($1, $3);      }
+        | T_IDENT "(" FuncArgs ")" { $$ = ast_ExpCall($1, $3);          }
         | "+" UnaryExp             { $$ = ast_ExpOp(OP_SUB, $2, 0);     }
         | "-" UnaryExp             { $$ = ast_ExpOp(OP_ADD, $2, 0);     }
         | "!" UnaryExp             { $$ = ast_ExpOp(OP_LOG_NOT, $2, 0); }

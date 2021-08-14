@@ -1,22 +1,23 @@
 %{
 #include "util.h"
+#include "ast.h"
 #include "parser.tab.h"
 
 // 维护行号地跳过 C-Style 注释
-void skip_c_style_comment(void) {
-    int c = 0;
-    while ( (c = yyinput()) != 0 ) {
-        if (c == '\n') {
-            yylineno += 1;
-        } else if (c == '*') {
-            if ( (c = yyinput()) == '/' ) {
-                return;
-            } else {
-                unput(c);
-            }
-        }
-    }
-}
+// #define skip_c_style_comment() {               \
+//     int c = 0;                                 \
+//     while ( (c = yyinput()) != 0 ) {           \
+//         if (c == '\n') {                       \
+//             yylineno += 1;                     \
+//         } else if (c == '*') {                 \
+//             if ( (c = yyinput()) == '/' ) {    \
+//                 return;                        \
+//             } else {                           \
+//                 unput(c);                      \
+//             }                                  \
+//         }                                      \
+//     }                                          \
+// }
 
 void deal_with_putf(void) {
     const char *str_start = strchr(yytext, '"');
@@ -32,13 +33,17 @@ void deal_with_putf(void) {
 
 %option noyywrap
 
+%x C_COMMENT
+
 %%
 " " { continue; }
 \t  { continue; }
 \n  { continue; }
 
-"\\".*\n     { continue; }
-"/*"         { skip_c_style_comment(); }
+"\\".*\n        { continue; }
+"/*"            { BEGIN(C_COMMENT); }
+<C_COMMENT>"*/" { BEGIN(INITIAL); }
+<C_COMMENT>.    { continue; }
 
 const { return T_CONST; }
 int   { return T_INT;   }
