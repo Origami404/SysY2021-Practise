@@ -71,7 +71,7 @@ void yyerror(char const* s) {
 
 CompUnit: Decl CompUnit     { $$ = cons_Ast($1, $2);  }
         | FuncDef CompUnit  { $$ = cons_Ast($1, $2);  } 
-        | /* empty */       { $$ = 0;                      }
+        | /* empty */       { $$ = 0;                 }
         ; 
 
 //---------------- Declaration & Definition ----------------------------
@@ -84,8 +84,8 @@ FuncParamList: FuncParam                   { $$ = cons_Ast($1, 0);   }
 FuncParam: "int" LVal { $$ = $LVal; }
          ;
 
-Decl: "const" "int" DefAny  { $$ = ast_Decl(true, $DefAny);  }
-    | "int" DefAny          { $$ = ast_Decl(false, $DefAny); }
+Decl: "const" "int" DefAny ";" { $$ = ast_Decl(true, $DefAny);  }
+    | "int" DefAny ";"         { $$ = ast_Decl(false, $DefAny); }
     ; 
 
 DefOne: LVal                       { $$ = ast_VarDef($1, 0);  }
