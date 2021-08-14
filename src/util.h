@@ -9,12 +9,7 @@
 #include <stdint.h>
 
 typedef char *string;
-
-string String(char const* s) {
-    char *p = malloc(strlen(s) + 1);
-    strcpy(p, s);
-    return p;
-}
+string String(char const* s);
 
 typedef int8_t i8;
 typedef int16_t i16;
@@ -27,27 +22,9 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 
 #define panic(...) _panic(__FILE__, __LINE__, __VA_ARGS__)
-void _panic(char const *file, int line, char const *fmt, ...) {
-    va_list argp;
-    va_start(argp, fmt);
+void _panic(char const *file, int line, char const *fmt, ...);
 
-    fprintf(stderr, "Panic at %s %d: ", file, line);
-    vfprintf(stderr, fmt, argp);
-    fprintf(stderr, "\n");
-
-    va_end(argp);
-    exit(-1);
-}
-
-void* checked_malloc(size_t s) {
-    void *p = malloc(s);
-    if (!p) panic("Memory error");
-    return p;
-}
-
-void checked_realloc(void *data, size_t s) {
-    void *p = realloc(data, s);
-    if (!p) panic("Memory error");
-}
+void* checked_malloc(size_t s);
+void checked_realloc(void *data, size_t s);
 
 #endif // HEADER_UTIL_H__
