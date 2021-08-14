@@ -5,7 +5,7 @@
 #include "util.h"
 
 typedef enum Ast_OpType {
-    OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_MOD, 
+    OP_ADD=1, OP_SUB, OP_MUL, OP_DIV, OP_MOD, 
     OP_EQ,  OP_NOT_EQ, OP_LESS, OP_LESS_EQ, OP_GREATER, OP_GREATER_EQ, 
     OP_LOG_NOT, OP_LOG_AND, OP_LOG_OR
 } Ast_OpType;
@@ -26,11 +26,11 @@ typedef enum Ast_NodeType {
     AT_InitExp, AT_InitArr,
 
     // --- other ---
-    AT_VarDef, AT_FuncDef, AT_Decl
+    AT_VarDef, AT_FuncDef, AT_Decl,
 } Ast_NodeType;
 
 typedef enum Ast_FuncRetType {
-    FRT_VOID, FRT_INT
+    FRT_VOID=1, FRT_INT
 } Ast_FuncRetType;
 
 struct Ast_Node;
@@ -72,7 +72,7 @@ struct Ast_Node {
         } exp_putf;
 
         struct {
-            Ast_Node func;
+            string func;
             ListAst args;
         } exp_call;
 
@@ -138,7 +138,9 @@ struct Ast_Node {
 };
 
 //@ cons_header
-#include <ast/cons.gen.h>
+#include <ast/cons.gen.h.inl>
 
+void ast_dump(FILE *out, Ast_Node node);
+void ast_dump_list(FILE *out, ListAst list);
 
 #endif // HEADER_AST_UNOOP_H__
