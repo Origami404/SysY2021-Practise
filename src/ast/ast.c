@@ -11,7 +11,7 @@ void ast_dump_list(FILE *out, ListAst list) {
 }
 
 static char const* is_const_name[] = {
-    "false", "true"
+    "False", "True", 
 };
 
 static char const* ret_type_name[] = {
@@ -55,9 +55,9 @@ ListAst cons_Ast(Ast_Node car, ListAst cdr) {
 }
 
 #define print_str(prompt, val) \
-    fprintf(out, "'" prompt "': %s", val)
+    fprintf(out, "'" prompt "': '%s',", val)
 #define print_int(prompt, val) \
-    fprintf(out, "'" prompt "': %d", val)
+    fprintf(out, "'" prompt "': %d,", val)
 #define print_ast(prompt, val) \
     fprintf(out, "'" prompt "': "); ast_dump(out, val); fprintf(out, ", ")
 #define print_list(prompt, val) \
@@ -71,7 +71,7 @@ void ast_dump(FILE *out, Ast_Node node) {
 
     fprintf(out, "{");
     // printf("DEBUG: %d\n", node->type);
-    fprintf(out, "'type': %s,", type_name[node->type]);
+    print_str("type", type_name[node->type]);
 
     switch (node->type) {
         #include "ast/ast_print.gen.c.inl"   

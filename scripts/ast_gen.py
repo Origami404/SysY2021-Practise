@@ -64,8 +64,8 @@ def gen_cons_def(node_name: str, fields: dict[str, str]) -> list[str]:
         f'    p->type = AT_{node_name};',
         *map(lambda n: f'    p->u.{struct_name}.{n} = {n};', fields.keys()),
         f'    ',
-        f'    ast_dump(stderr, p);',
-        f'    fprintf(stderr, "\\n");'
+        f'    debug_do(ast_dump(stderr, p));',
+        f'    debug_do(fprintf(stderr, "\\n"));'
         f'    return p;',
         f'}}'
     ]
