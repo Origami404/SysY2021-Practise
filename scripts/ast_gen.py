@@ -58,29 +58,34 @@ def gen_cons_def(node_name: str, fields: dict[str, str]) -> list[str]:
     struct_name = enum2struct(node_name)
     return [
         gen_cons_decl(node_name, fields) + ' {',
+        f'    debug("Constructing {node_name}");',
         f'    Ast_Node p = checked_malloc(sizeof(*p));',
         f'    ',
         f'    p->type = AT_{node_name};',
         *map(lambda n: f'    p->u.{struct_name}.{n} = {n};', fields.keys()),
         f'    ',
+        f'    ast_dump(stderr, p);',
+        f'    fprintf(stderr, "\\n");'
         f'    return p;',
         f'}}'
     ]
 
+def gen_print_val(struct_name: str, name: str, type: str):
+    val = f'node->u.{struct_name}.{name}'
+    if type == 'string':
+        return f'    print_str("{name}", {val});'
+    elif type == 'int':
+        return f'    print_int("{name}", {val});'
+    elif type == 'Ast_Node':
+        return f'    print_ast("{name}", {val});'
+    elif type == 'ListAst':
+        return f'    print_list("{name}", {val});'
+    else:
+        return f'    print_str("{name}", {name}_name[{val}]);'
+        
 def gen_print_def(node_name: str, fields: dict[str, str]) -> list[str]:
     struct_name = enum2struct(node_name)
-    def mk_line(name: str, type: str):
-        val = f'node->u.{struct_name}.{name}'
-        if type == 'string':
-            return f'    print_str("{name}", {val});'
-        elif type == 'int':
-            return f'    print_int("{name}", {val});'
-        elif type == 'Ast_Node':
-            return f'    print_ast("{name}", {val});'
-        elif type == 'ListAst':
-            return f'    print_list("{name}", {val});'
-        else:
-            return f'    print_str("{name}", {name}_name[{val}]);'
+    mk_line = lambda n, t: gen_print_val(struct_name, n, t)
 
     return [
         f'case AT_{node_name}:',
@@ -109,8 +114,8 @@ def deal(ast_path: str, constructor_path: str, print_path: str):
     
     with open(constructor_path, 'w') as f:
         f.write('// This file is automatically generate by ast_gen_constructor.py, do NOT modify it by hand\n\n')
-        f.write('#include "util.h"\n')
-        f.write(f'#include "{ast_path}"\n\n\n')
+        # f.write('#include "util.h"\n')
+        # f.write(f'#include "{ast_path}"\n\n\n')
         f.write('\n\n'.join(map(lambda l: '\n'.join(l), starmap(gen_cons_def, nfs.items()))))
     
     with open(print_path, 'w') as f:
