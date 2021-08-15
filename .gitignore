@@ -1,3 +1,6 @@
 *.inl
 *.o
 ssyc
+.vscode
+parser.tab.c
+parser.tab.h
