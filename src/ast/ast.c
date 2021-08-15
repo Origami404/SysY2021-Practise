@@ -70,10 +70,13 @@ void ast_dump(FILE *out, Ast_Node node) {
     }
 
     fprintf(out, "{");
+    // printf("DEBUG: %d\n", node->type);
     fprintf(out, "'type': %s,", type_name[node->type]);
 
     switch (node->type) {
-        #include "ast/ast_print.gen.c.inl"      
+        #include "ast/ast_print.gen.c.inl"   
+
+        default: panic("Unknown type: %d\n", node->type);   
     }
 
     fprintf(out, "}");
