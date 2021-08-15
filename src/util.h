@@ -26,8 +26,10 @@ void _panic(char const *file, int line, char const *fmt, ...);
 
 #ifdef DEBUG
 #define debug(...) _debug(__FILE__, __LINE__, __VA_ARGS__) 
+#define debug_do(stmt) stmt 
 #else
 #define debug(...) 
+#define debug_do(stmt) 
 #endif
 
 void _debug(char const *file, int line, char const *fmt, ...);
