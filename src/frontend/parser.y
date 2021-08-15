@@ -10,6 +10,14 @@ void yyerror(char const* s) {
     panic("Yacc error: %s", s);
 }
 
+#ifdef DEBUG
+#define YYDEBUG 1
+#else
+#define YYDEBUG 0
+#endif
+
+extern ListAst result;
+
 %}
 
 %union {
@@ -69,9 +77,9 @@ void yyerror(char const* s) {
 
 %%
 
-CompUnit: Decl CompUnit     { $$ = cons_Ast($1, $2);  }
-        | FuncDef CompUnit  { $$ = cons_Ast($1, $2);  } 
-        | /* empty */       { $$ = 0;                 }
+CompUnit: Decl CompUnit     { $$ = result = cons_Ast($1, $2);  }
+        | FuncDef CompUnit  { $$ = result = cons_Ast($1, $2);  } 
+        | /* empty */       { $$ = result = 0;                 }
         ; 
 
 //---------------- Declaration & Definition ----------------------------
@@ -80,6 +88,7 @@ FuncDef: "int"  T_IDENT "(" FuncParamList ")" Block { $$ = ast_FuncDef(FRT_INT, 
        ;
 FuncParamList: FuncParam                   { $$ = cons_Ast($1, 0);   }
              | FuncParam "," FuncParamList { $$ = cons_Ast($1, $3);  }
+             | /* empty */                 { $$ = 0;                 }
              ;
 FuncParam: "int" LVal { $$ = $LVal; }
          ;
