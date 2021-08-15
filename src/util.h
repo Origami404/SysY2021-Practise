@@ -24,6 +24,14 @@ typedef uint64_t u64;
 #define panic(...) _panic(__FILE__, __LINE__, __VA_ARGS__)
 void _panic(char const *file, int line, char const *fmt, ...);
 
+#ifdef DEBUG
+#define debug(...) _debug(__FILE__, __LINE__, __VA_ARGS__) 
+#else
+#define debug(...) 
+#endif
+
+void _debug(char const *file, int line, char const *fmt, ...);
+
 void* checked_malloc(size_t s);
 void* checked_realloc(void *data, size_t s);
 
