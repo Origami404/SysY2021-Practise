@@ -27,9 +27,11 @@ void _panic(char const *file, int line, char const *fmt, ...);
 #ifdef DEBUG
 #define debug(...) _debug(__FILE__, __LINE__, __VA_ARGS__) 
 #define debug_do(stmt) stmt 
+#define assert(stmt) do { if (stmt) ; else panic("Assert: \"" #stmt "\" fail."); } while (0)
 #else
 #define debug(...) 
 #define debug_do(stmt) 
+#define assert(stmt) 
 #endif
 
 void _debug(char const *file, int line, char const *fmt, ...);
