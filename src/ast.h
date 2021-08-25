@@ -134,7 +134,7 @@ struct Ast_Node {
             bool is_const; 
             ListAst def; 
         } decl;
-    } u;
+    };
 };
 
 //@ cons_header

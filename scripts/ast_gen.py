@@ -62,7 +62,7 @@ def gen_cons_def(node_name: str, fields: dict[str, str]) -> list[str]:
         f'    Ast_Node p = checked_malloc(sizeof(*p));',
         f'    ',
         f'    p->type = AT_{node_name};',
-        *map(lambda n: f'    p->u.{struct_name}.{n} = {n};', fields.keys()),
+        *map(lambda n: f'    p->{struct_name}.{n} = {n};', fields.keys()),
         f'    ',
         f'    debug_do(ast_dump(stderr, p));',
         f'    debug_do(fprintf(stderr, "\\n"));'
@@ -71,7 +71,7 @@ def gen_cons_def(node_name: str, fields: dict[str, str]) -> list[str]:
     ]
 
 def gen_print_val(struct_name: str, name: str, type: str):
-    val = f'node->u.{struct_name}.{name}'
+    val = f'node->{struct_name}.{name}'
     if type == 'string':
         return f'    print_str("{name}", {val});'
     elif type == 'int':
