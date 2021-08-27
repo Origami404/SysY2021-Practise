@@ -10,11 +10,11 @@ cd ..
 
 python ../scripts/ast_gen.py
 
-if [ $1 == "debug" ]
+if [ $1 == "production" ]
 then
-    addition_flag="-Wall -g -DDEBUG"
-else
     addition_flag="-O2"
+else
+    addition_flag="-Wall -g -DDEBUG"
 fi
 
 # ref: https://unix.stackexchange.com/a/19656
