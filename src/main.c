@@ -2,7 +2,7 @@
 #include "ast.h"
 #include "frontend/parser.tab.h"
 
-ListAst result;
+Ast_List result;
 
 int main(int argc, char **argv) {
     yyparse();

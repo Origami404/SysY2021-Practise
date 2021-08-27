@@ -36,18 +36,18 @@ typedef enum Ast_FuncRetType {
 struct Ast_Node;
 typedef struct Ast_Node *Ast_Node;
 
-typedef struct ListAst {
+typedef struct Ast_List {
     Ast_Node car;
-    struct ListAst *cdr;
-} *ListAst;
-ListAst cons_Ast(Ast_Node car, ListAst cdr);
+    struct Ast_List *cdr;
+} *Ast_List;
+Ast_List cons_Ast(Ast_Node car, Ast_List cdr);
 
 struct Ast_Node {
     enum Ast_NodeType type;
     union {
         struct {
             string name;
-            ListAst index;
+            Ast_List index;
         } lval;
 
 
@@ -68,18 +68,18 @@ struct Ast_Node {
 
         struct {
             string format;
-            ListAst args;
+            Ast_List args;
         } exp_putf;
 
         struct {
             string func;
-            ListAst args;
+            Ast_List args;
         } exp_call;
 
 
         // --- stmt --- 
         struct {
-            ListAst items;
+            Ast_List items;
         } block;
 
         struct {
@@ -113,7 +113,7 @@ struct Ast_Node {
         } init_exp;
 
         struct {
-            ListAst subs;
+            Ast_List subs;
         } init_arr;
 
 
@@ -126,13 +126,13 @@ struct Ast_Node {
         struct {
             Ast_FuncRetType ret_type;
             string func_name;
-            ListAst params;
+            Ast_List params;
             Ast_Node body;
         } func_def;
 
         struct {
             bool is_const; 
-            ListAst def; 
+            Ast_List def; 
         } decl;
     };
 };
@@ -141,6 +141,6 @@ struct Ast_Node {
 #include <ast/cons.gen.h.inl>
 
 void ast_dump(FILE *out, Ast_Node node);
-void ast_dump_list(FILE *out, ListAst list);
+void ast_dump_list(FILE *out, Ast_List list);
 
 #endif // HEADER_AST_UNOOP_H__

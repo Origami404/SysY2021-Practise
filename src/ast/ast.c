@@ -1,7 +1,7 @@
 #include "util.h"
 #include "ast.h"
 
-void ast_dump_list(FILE *out, ListAst list) {
+void ast_dump_list(FILE *out, Ast_List list) {
     fprintf(out, "[");
     for (; list; list = list->cdr) {
         ast_dump(out, list->car);
@@ -47,8 +47,8 @@ static char const* type_name[] = {
     "VarDef", "FuncDef", "Decl",
 };
 
-ListAst cons_Ast(Ast_Node car, ListAst cdr) {
-    ListAst p = checked_malloc(sizeof(*p));
+Ast_List cons_Ast(Ast_Node car, Ast_List cdr) {
+    Ast_List p = checked_malloc(sizeof(*p));
     p->car = car;
     p->cdr = cdr;
     return p;

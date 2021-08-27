@@ -16,7 +16,7 @@ void yyerror(char const* s) {
 #define YYDEBUG 0
 #endif
 
-extern ListAst result;
+extern Ast_List result;
 
 %}
 
@@ -26,7 +26,7 @@ extern ListAst result;
     string sval;
 
     Ast_Node node;
-    ListAst node_list;
+    Ast_List node_list;
 }
 
 // %token <FieldNameInUnion> TerminalName "Comment"

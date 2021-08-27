@@ -78,7 +78,7 @@ def gen_print_val(struct_name: str, name: str, type: str):
         return f'    print_int("{name}", {val});'
     elif type == 'Ast_Node':
         return f'    print_ast("{name}", {val});'
-    elif type == 'ListAst':
+    elif type == 'Ast_List':
         return f'    print_list("{name}", {val});'
     else:
         return f'    print_str("{name}", {name}_name[{val}]);'
