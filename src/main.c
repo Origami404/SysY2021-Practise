@@ -6,5 +6,5 @@ Ast_List result;
 
 int main(int argc, char **argv) {
     yyparse();
-    ast_dump_list(stderr, result);
+    ast_dump_list(stdout, result);
 }

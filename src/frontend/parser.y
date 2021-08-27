@@ -6,9 +6,7 @@
 
 extern int yylex();
 
-void yyerror(char const* s) {
-    panic("Yacc error: %s", s);
-}
+#define yyerror(s) panic("Yacc error: %s", s);
 
 #ifdef DEBUG
 #define YYDEBUG 1
@@ -131,10 +129,10 @@ Block: "{" BlockItemList "}"        { $$ = ast_Block($2); }
      ;
 BlockItemList: Decl BlockItemList   { $$ = cons_Ast($1, $2);  }
              | Stmt BlockItemList   { $$ = cons_Ast($1, $2);  }
-             | /* Empty */          { $$ = 0;                           }
+             | /* Empty */          { $$ = 0;                 }
              ;
 
-IfStmt: "if" "(" Cond ")" Stmt             { $$ = ast_StmtIf($Cond, $5, 0); }
+IfStmt: "if" "(" Cond ")" Stmt             { $$ = ast_StmtIf($Cond, $5, 0);  }
       | "if" "(" Cond ")" Stmt "else" Stmt { $$ = ast_StmtIf($Cond, $5, $7); }
       ;
 
@@ -199,7 +197,8 @@ ArrIdx: ArrIdx "[" Exp "]"   { $$ = cons_Ast($3, $1);  }
       | /* empty */          { $$ = 0;                     }
       ;
 
-FuncArgs: LVal               { $$ = cons_Ast($1, 0);   }
-        | LVal "," FuncArgs  { $$ = cons_Ast($1, $3);  }
+FuncArgs: Exp                { $$ = cons_Ast($1, 0);   }
+        | Exp "," FuncArgs   { $$ = cons_Ast($1, $3);  }
+        | /* empty */        { $$ = 0;                 }
         ;
 
