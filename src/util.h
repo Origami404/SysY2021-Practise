@@ -22,7 +22,7 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 
 #define panic(...) _panic(__FILE__, __LINE__, __VA_ARGS__)
-void _panic(char const *file, int line, char const *fmt, ...);
+void _Noreturn _panic(char const *file, int line, char const *fmt, ...);
 
 #ifdef DEBUG
 #define debug(...) _debug(__FILE__, __LINE__, __VA_ARGS__) 
