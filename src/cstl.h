@@ -27,4 +27,18 @@ void  vec_set(vector v, int idx, void *data);
 
 void vec_destory(vector v);
 
+
+#ifndef DEF_STR_MAP
+typedef void *str_map;
+#endif
+
+str_map map_create();
+
+void    map_set(str_map m, string key, string val);
+string  map_get(str_map m, string key);
+void    map_del(str_map m, string key);
+void    map_extend(str_map m, str_map other);
+
+str_map map_destory(str_map m);
+
 #endif // HEADER_CSTL_H__
