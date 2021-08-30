@@ -99,6 +99,10 @@ void vec_set(vector v, int idx, void *data) {
     memcpy(p, data, v->size);
 }
 
+size_t vec_len(vector v) {
+    return v->length;
+}
+
 void vec_destory(vector v) {
     free(v->data);
     free(v);

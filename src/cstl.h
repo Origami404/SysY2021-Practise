@@ -24,6 +24,7 @@ void  vec_add(vector v, void *data);
 void  vec_pop(vector v);
 void* vec_get(vector v, int idx);
 void  vec_set(vector v, int idx, void *data);
+size_t vec_len(vector v);
 
 void vec_destory(vector v);
 
