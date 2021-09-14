@@ -49,10 +49,17 @@ IR_Code ir_code_create(IR_Type type, string dest, string op1, string op2);
 #define IR_IR_MAX_SIZE 65536
 extern IR_Code ir_list[IR_IR_MAX_SIZE];
 
-// shape 是一个可空的 int 数组, 表示这个变量的数组维度
-// 当 shape 为空的时候, 表示 name 是一个单个变量
-void ir_sym_add_variable(string name, int *shape);
-int* ir_sym_get_shape(string name);
+// 不是指针类型, 不用 typedef
+struct IR_VarInfo {
+    // shape 是一个可空的 int 数组, 表示这个变量的数组维度
+    // 当 shape 为空的时候, 表示 name 是一个单个变量
+    int *shape;
+    bool is_const;
+    // 放在最后, 不给的话默认为 0
+    int init;
+};
+void ir_sym_add_variable(string name, struct IR_VarInfo info);
+struct IR_VarInfo ir_sym_get_shape(string name);
 
 #define IR_SCOPE_MAX_SIZE 512
 void ir_sym_push_scope(void);

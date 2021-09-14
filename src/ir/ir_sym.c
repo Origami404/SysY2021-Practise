@@ -2,14 +2,21 @@
 #include "ir.h"
 #include "cstl.h"
 
+typedef struct IR_VarInfo *IR_VarInfo;
+static IR_VarInfo info_dup(struct IR_VarInfo info) {
+    IR_VarInfo p = checked_malloc(sizeof(*p));
+    memcpy(p, &info, sizeof(*p));
+    return p;
+}
+
 typedef str_map IR_SymTab;
 
 inline IR_SymTab ir_tab_create(void) { return map_create(); }
-inline void ir_tab_add(IR_SymTab tab, string name, int *shape) { 
-    map_set(tab, name, shape); 
+inline static void ir_tab_add(IR_SymTab tab, string name, struct IR_VarInfo info) { 
+    map_set(tab, name, info_dup(info)); 
 }
-inline int* ir_tab_get(IR_SymTab tab, string name) {
-    return map_get(tab, name);
+inline static struct IR_VarInfo ir_tab_get(IR_SymTab tab, string name) {
+    return *((IR_VarInfo)map_get(tab, name));
 }
 
 typedef struct IR_Scope {
@@ -17,7 +24,7 @@ typedef struct IR_Scope {
     struct IR_Scope *upper;
 } *IR_Scope;
 
-IR_Scope ir_scope_creates(IR_Scope upper) {
+static IR_Scope ir_scope_creates(IR_Scope upper) {
     IR_Scope p = checked_malloc(sizeof(*p));
     p->sym_tab = ir_tab_create();
     p->upper = upper;
@@ -39,11 +46,11 @@ void ir_sym_pop_scope(void) {
     scope_now = scope_now->upper;
 }
 
-void ir_sym_add_variable(string name, int* shape) {
-    ir_tab_add(scope_now->sym_tab, name, shape);
+void ir_sym_add_variable(string name, struct IR_VarInfo info) {
+    ir_tab_add(scope_now->sym_tab, name, info);
 }
 
-int* ir_sym_get_shape(string name) {
-    ir_tab_get(scope_now->sym_tab, name);
+struct IR_VarInfo ir_sym_get_shape(string name) {
+    return ir_tab_get(scope_now->sym_tab, name);
 }
  
