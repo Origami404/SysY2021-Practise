@@ -50,7 +50,7 @@ void ir_sym_add_variable(string name, struct IR_VarInfo info) {
     ir_tab_add(scope_now->sym_tab, name, info);
 }
 
-struct IR_VarInfo ir_sym_get_shape(string name) {
+struct IR_VarInfo ir_sym_get_info(string name) {
     return ir_tab_get(scope_now->sym_tab, name);
 }
  
