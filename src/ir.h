@@ -37,53 +37,26 @@ typedef enum {
     IRT_NOOP,            // no operation
 } IR_Type;
 
-typedef struct OpArg {
-    enum {
-        OV_Var, OV_Imm, OV_Labal
-    } type;
-
-    union {
-        string var;
-        string label;
-        int imm;
-    };
-} *OpArg;
-OpArg op_arg_var_create(string var);
-OpArg op_arg_imm_create(int imm);
-OpArg op_arg_lab_create(string label);
-
+// 参数中以 . 开头的是 label
+// 以 @ 开头的是全局变量, 以 # 开头的是局部变量
+// 以 数字 开头的是立即数
 typedef struct IR_Code {
     IR_Type type;
-
-    string dest;
-    OpArg op1, op2;
+    string dest, op1, op2;
 } *IR_Code;
-IR_Code ir_code_create(IR_Type type, string dest, OpArg op1, OpArg op2);
+IR_Code ir_code_create(IR_Type type, string dest, string op1, string op2);
 
-typedef struct IR_List {
-    IR_Code ir;
-    struct IR_List *next;
-    struct IR_List *prev;
-} *IR_List;
-IR_List ir_list_create(IR_Code ir, IR_List next, IR_List prev);
+#define IR_IR_MAX_SIZE 65536
+extern IR_Code ir_list[IR_IR_MAX_SIZE];
 
-typedef struct IR_SymTable {
-    str_map table;
-    struct IR_SymTable *upper;
-} *IR_SymTable;
-IR_SymTable ir_sym_table_create(IR_SymTable upper);
-string ir_sym_lookup(IR_SymTable sym_tab, string name);
+// shape 是一个可空的 int 数组, 表示这个变量的数组维度
+// 当 shape 为空的时候, 表示 name 是一个单个变量
+void ir_sym_add_variable(string name, int *shape);
+int* ir_sym_get_shape(string name);
 
-typedef struct IR_Block {
-    IR_List ir_beg;
-    IR_List ir_end;
-
-    vector_t(IR_Block) succ;
-    vector_t(IR_Block) pred;
-
-    IR_SymTable sym_tab;
-} *IR_Block;
-IR_Block ir_block_create();
+#define IR_SCOPE_MAX_SIZE 512
+void ir_sym_push_scope(void);
+void ir_sym_pop_scope(void);
 
 
 
