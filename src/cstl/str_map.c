@@ -2,7 +2,7 @@
 
 typedef struct Node {
     string key; 
-    string val;
+    void* val;
     struct Node *next;
 } *Node;
 
@@ -16,7 +16,7 @@ typedef struct str_map {
 #define DEF_STR_MAP
 #include "cstl.h"
 
-Node node_create(string key, string val, Node next) {
+Node node_create(string key, void *val, Node next) {
     Node p = checked_malloc(sizeof(*p));
     *p = (struct Node) { key, val, next };
     return p;
@@ -40,7 +40,7 @@ str_map map_create(void) {
     return p;
 }
 
-void map_set(str_map m, string key, string val) {
+void map_set(str_map m, string key, void *val) {
     u32 const h = hash(key);
     Node n = m->bucket[h];
     
@@ -61,7 +61,7 @@ void map_set(str_map m, string key, string val) {
     n->next = node_create(key, val, 0);
 }
 
-string map_get(str_map m, string key) {
+void* map_get(str_map m, string key) {
     Node n = m->bucket[hash(key)];
 
     // 找到第一个非空的并且键就是 key 的节点

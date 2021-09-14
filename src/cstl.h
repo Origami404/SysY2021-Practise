@@ -35,10 +35,10 @@ typedef void *str_map;
 
 str_map map_create();
 
-void    map_set(str_map m, string key, string val);
-string  map_get(str_map m, string key);
-void    map_del(str_map m, string key);
-void    map_extend(str_map m, str_map other);
+void  map_set(str_map m, string key, void *val);
+void* map_get(str_map m, string key);
+void  map_del(str_map m, string key);
+void  map_extend(str_map m, str_map other);
 
 str_map map_destory(str_map m);
 
