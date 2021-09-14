@@ -20,7 +20,6 @@ extern Ast_List result;
 
 %union {
     // int token;
-    int ival;
     string sval;
 
     Ast_Node node;
@@ -30,7 +29,7 @@ extern Ast_List result;
 // %token <FieldNameInUnion> TerminalName "Comment"
 
 %token <sval> T_IDENT "identifier" T_STR "string literal" T_PUTF "putf"
-%token <ival> T_NUM   "number literal" 
+%token <sval> T_NUM   "number literal" 
 
 %token T_CONST "const"  T_INT    "int"     T_VOID     "void"
 %token T_IF    "if"     T_ELSE   "else"    T_WHILE    "while"

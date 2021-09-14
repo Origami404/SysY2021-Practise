@@ -63,7 +63,7 @@ struct Ast_Node {
         } exp_lval;
 
         struct {
-            int val;
+            string val;
         } exp_num;
 
         struct {

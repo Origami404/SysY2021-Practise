@@ -89,9 +89,9 @@ putf  { /*deal_with_putf();*/ return T_PUTF; }
 
 [a-zA-Z_][0-9a-zA-Z_]* { yylval.sval = String(yytext); return T_IDENT; }
 
-[1-9][0-9]*            { yylval.ival = (int)strtol(yytext, 0, 0); return T_NUM; }
-0[0-7]*                { yylval.ival = (int)strtol(yytext, 0, 0); return T_NUM; }
-0(x|X)[0-9a-fA-F]*     { yylval.ival = (int)strtol(yytext, 0, 0); return T_NUM; }
+[1-9][0-9]*            { yylval.sval = String(yytext); return T_NUM; }
+0[0-7]*                { yylval.sval = String(yytext); return T_NUM; }
+0(x|X)[0-9a-fA-F]*     { yylval.sval = String(yytext); return T_NUM; }
  
 "\"".*"\""                 { yylval.sval = String(yytext); return T_STR; }
 
