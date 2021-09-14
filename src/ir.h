@@ -59,7 +59,7 @@ struct IR_VarInfo {
     int init;
 };
 void ir_sym_add_variable(string name, struct IR_VarInfo info);
-struct IR_VarInfo ir_sym_get_shape(string name);
+struct IR_VarInfo ir_sym_get_info(string name);
 
 #define IR_SCOPE_MAX_SIZE 512
 void ir_sym_push_scope(void);
