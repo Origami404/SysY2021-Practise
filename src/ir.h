@@ -48,6 +48,10 @@ IR_Code ir_code_create(IR_Type type, string dest, string op1, string op2);
 
 #define IR_IR_MAX_SIZE 65536
 extern IR_Code ir_list[IR_IR_MAX_SIZE];
+extern IR_Code ir_now;
+
+string ir_temporary(char prefix);
+void ir_code_add(IR_Type type, string dest, string op1, string op2);
 
 // 不是指针类型, 不用 typedef
 struct IR_VarInfo {
@@ -64,7 +68,6 @@ struct IR_VarInfo ir_sym_get_info(string name);
 #define IR_SCOPE_MAX_SIZE 512
 void ir_sym_push_scope(void);
 void ir_sym_pop_scope(void);
-
 
 
 #endif // HEADER_IR_H__
