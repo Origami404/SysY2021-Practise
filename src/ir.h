@@ -47,10 +47,17 @@ typedef struct IR_Code {
 IR_Code ir_code_create(IR_Type type, string dest, string op1, string op2);
 
 #define IR_IR_MAX_SIZE 65536
-extern IR_Code ir_list[IR_IR_MAX_SIZE];
+// extern IR_Code ir_list[IR_IR_MAX_SIZE];
+// 当前的 IR 指令 
 extern IR_Code ir_now;
 
-string ir_temporary(char prefix);
+// 生成一个新的局部变量名字, 始终以 # 开头
+string ir_temporary();
+
+// 根据变量在局部还是全局修饰变量的名字
+string ir_modify_name(string code_name); 
+
+// 新增一行 IR
 void ir_code_add(IR_Type type, string dest, string op1, string op2);
 
 // 不是指针类型, 不用 typedef
@@ -60,6 +67,7 @@ struct IR_VarInfo {
     // 做出此安排是为了方便后面计算拍平的索引
     int *shape;
     bool is_const;
+    bool is_global;
     // 放在最后, 不给的话默认为 0
     int init;
 };
