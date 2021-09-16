@@ -72,12 +72,20 @@ struct IR_VarInfo {
     // 放在最后, 不给的话默认为 0
     int init;
 };
-void ir_sym_add_variable(string name, struct IR_VarInfo info);
-struct IR_VarInfo ir_sym_get_info(string name);
+void ir_info_var_set(string name, struct IR_VarInfo info);
+struct IR_VarInfo ir_info_var_get(string name);
 
 #define IR_SCOPE_MAX_SIZE 512
-void ir_sym_push_scope(void);
-void ir_sym_pop_scope(void);
+void ir_info_scope_push(void);
+void ir_info_scope_pop(void);
+
+struct IR_FuncInfo {
+    Ast_FuncRetType ret_type;
+    struct IR_VarInfo *arg_types;
+};
+
+void ir_info_func_set(string name, struct IR_FuncInfo);
+struct IR_FuncInfo ir_info_func_get(string name);
 
 
 #endif // HEADER_IR_H__

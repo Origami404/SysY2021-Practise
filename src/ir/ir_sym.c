@@ -35,22 +35,22 @@ IR_Scope scope_list[IR_SCOPE_MAX_SIZE];
 size_t scope_cnt = 0;
 IR_Scope scope_now;
 
-void ir_sym_push_scope(void) {
+void ir_info_scope_push(void) {
     if (scope_now == IR_SCOPE_MAX_SIZE - 1) panic("Too many scope");
 
     scope_now = ir_scope_creates(scope_now);
     scope_list[scope_cnt++] = scope_now;
 }
 
-void ir_sym_pop_scope(void) {
+void ir_info_scope_pop(void) {
     scope_now = scope_now->upper;
 }
 
-void ir_sym_add_variable(string name, struct IR_VarInfo info) {
+void ir_info_var_set(string name, struct IR_VarInfo info) {
     ir_tab_add(scope_now->sym_tab, name, info);
 }
 
-struct IR_VarInfo ir_sym_get_info(string name) {
+struct IR_VarInfo ir_info_var_get(string name) {
     return ir_tab_get(scope_now->sym_tab, name);
 }
  
