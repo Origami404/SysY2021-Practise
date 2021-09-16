@@ -55,8 +55,9 @@ void ir_code_add(IR_Type type, string dest, string op1, string op2);
 
 // 不是指针类型, 不用 typedef
 struct IR_VarInfo {
-    // shape 是一个可空的 int 数组, 表示这个变量的数组维度
-    // 当 shape 为空的时候, 表示 name 是一个单个变量
+    // shape 是一个非空的 int 数组, 表示这个变量的数组维度
+    // shape[0] 表示有多少维, 接下来的shape[1], shape[2],..., shape[n]依次为该维长度
+    // 做出此安排是为了方便后面计算拍平的索引
     int *shape;
     bool is_const;
     // 放在最后, 不给的话默认为 0
