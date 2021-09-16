@@ -3,6 +3,7 @@
 
 #include "util.h"
 #include "cstl.h"
+#include "ast.h"
 
 typedef enum {
     IRT_MOV,             // dest = op1
@@ -61,6 +62,12 @@ string ir_modify_name(string code_name);
 // 新增一行 IR
 void ir_code_add(IR_Type type, string dest, string op1, string op2);
 
+#define IR_SCOPE_MAX_SIZE 512
+// 新建作用域
+void ir_info_scope_push(void);
+void ir_info_scope_pop(void);
+
+// 变量信息
 // 不是指针类型, 不用 typedef
 struct IR_VarInfo {
     // shape 是一个非空的 int 数组, 表示这个变量的数组维度
@@ -75,10 +82,7 @@ struct IR_VarInfo {
 void ir_info_var_set(string name, struct IR_VarInfo info);
 struct IR_VarInfo ir_info_var_get(string name);
 
-#define IR_SCOPE_MAX_SIZE 512
-void ir_info_scope_push(void);
-void ir_info_scope_pop(void);
-
+// 函数信息
 struct IR_FuncInfo {
     Ast_FuncRetType ret_type;
     struct IR_VarInfo *arg_types;
