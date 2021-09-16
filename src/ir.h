@@ -11,6 +11,7 @@ typedef enum {
     IRT_MUL,             // dest = op1 * op2
     IRT_DIV,             // dest = op1 / op2
     IRT_MOD,             // dest = op1 % op2
+    IRT_ARG,             // if dest < 4: R(dest) = op1; else: push_stack(op1); 
     IRT_CALL,            // call label
     IRT_CMP,             // cmp op1, op2
     IRT_JMP,             // jmp label
