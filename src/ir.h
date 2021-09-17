@@ -26,7 +26,7 @@ typedef enum {
     IRT_OR,              // dest = op1 || op2
     IRT_SAL,             // dest = op1 << op2 算数左移
     IRT_SAR,             // dest = op1 >> op2 算数右移
-    IRT_STORE,           // op1[op2] = op3
+    IRT_STORE,           // dest[op1] = op2
     IRT_LOAD,            // dest = op1[op2]
     IRT_RET,             // return / return op1
     IRT_DATA_BEGIN,      //.data
@@ -39,9 +39,10 @@ typedef enum {
     IRT_NOOP,            // no operation
 } IR_Type;
 
-// 参数中以 . 开头的是 label
+// 参数约定
+// 以 . 开头的是局部 label, 以 _ 开头的是函数 label, 以 字母 开头的是暂时的原来的 label
 // 以 @ 开头的是全局变量, 以 # 开头的是局部变量
-// 以 数字 开头的是立即数
+// 以 数字 开头的是立即数, 以 字母 开头的是暂时的原来的名字
 typedef struct IR_Code {
     IR_Type type;
     string dest, op1, op2;
@@ -55,9 +56,6 @@ extern IR_Code ir_now;
 
 // 生成一个新的局部变量名字, 始终以 # 开头
 string ir_temporary();
-
-// 根据变量在局部还是全局修饰变量的名字
-string ir_modify_name(string code_name); 
 
 // 新增一行 IR
 void ir_code_add(IR_Type type, string dest, string op1, string op2);
@@ -90,6 +88,5 @@ struct IR_FuncInfo {
 
 void ir_info_func_set(string name, struct IR_FuncInfo);
 struct IR_FuncInfo ir_info_func_get(string name);
-
 
 #endif // HEADER_IR_H__
