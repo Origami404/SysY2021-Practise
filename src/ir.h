@@ -53,6 +53,7 @@ IR_Code ir_code_create(IR_Type type, string dest, string op1, string op2);
 // extern IR_Code ir_list[IR_IR_MAX_SIZE];
 // 当前的 IR 指令 
 extern IR_Code ir_now;
+extern size_t ir_now_offset;
 
 // 生成一个新的局部变量名字, 始终以 # 开头
 string ir_temporary();
@@ -60,10 +61,18 @@ string ir_temporary();
 // 新增一行 IR
 void ir_code_add(IR_Type type, string dest, string op1, string op2);
 
+// 增加一行 IR 并且暴露出 op1 的位置给第二轮 pass 修改
+string* ir_code_add_with_undetermined_label(IR_Type type);
+
+// ======================== IR Generation Context ==========================
+
 #define IR_SCOPE_MAX_SIZE 512
 // 新建作用域
 void ir_info_scope_push(void);
 void ir_info_scope_pop(void);
+
+void ir_info_mark_nearest_while(void);
+string ir_info_get_nearest_while(void);
 
 // 变量信息
 // 不是指针类型, 不用 typedef
