@@ -147,41 +147,41 @@ Exp : AddExp;
 Cond: LOrExp;
 
 LOrExp: LAndExp
-      |  LOrExp "||" LAndExp { $$ = ast_ExpOp(OP_LOG_OR, $1, $3); }
+      |  LOrExp "||" LAndExp { $$ = ast_ExpLog(OP_LOG_OR, $1, $3); }
       ;
 
 LAndExp: EqExp
-       | LAndExp "&&" EqExp { $$ = ast_ExpOp(OP_LOG_AND, $1, $3); }
+       | LAndExp "&&" EqExp { $$ = ast_ExpLog(OP_LOG_AND, $1, $3); }
        ;
 
 EqExp: RelExp
-     | EqExp "==" RelExp { $$ = ast_ExpOp(OP_EQ,     $1, $3); }
-     | EqExp "!=" RelExp { $$ = ast_ExpOp(OP_NOT_EQ, $1, $3); }
+     | EqExp "==" RelExp { $$ = ast_ExpRel(OP_EQ,     $1, $3); }
+     | EqExp "!=" RelExp { $$ = ast_ExpRel(OP_NOT_EQ, $1, $3); }
      ; 
 
 RelExp: AddExp
-      | RelExp "<"  AddExp { $$ = ast_ExpOp(OP_LESS,       $1, $3); }
-      | RelExp "<=" AddExp { $$ = ast_ExpOp(OP_LESS_EQ,    $1, $3); }
-      | RelExp ">"  AddExp { $$ = ast_ExpOp(OP_GREATER,    $1, $3); }
-      | RelExp ">=" AddExp { $$ = ast_ExpOp(OP_GREATER_EQ, $1, $3); }
+      | RelExp "<"  AddExp { $$ = ast_ExpRel(OP_LESS,       $1, $3); }
+      | RelExp "<=" AddExp { $$ = ast_ExpRel(OP_LESS_EQ,    $1, $3); }
+      | RelExp ">"  AddExp { $$ = ast_ExpRel(OP_GREATER,    $1, $3); }
+      | RelExp ">=" AddExp { $$ = ast_ExpRel(OP_GREATER_EQ, $1, $3); }
       ;
 
 AddExp: MulExp
-      | AddExp "+" MulExp  { $$ = ast_ExpOp(OP_ADD, $1, $3); }
-      | AddExp "-" MulExp  { $$ = ast_ExpOp(OP_SUB, $1, $3); }
+      | AddExp "+" MulExp  { $$ = ast_ExpAdd(OP_ADD, $1, $3); }
+      | AddExp "-" MulExp  { $$ = ast_ExpAdd(OP_SUB, $1, $3); }
       ; 
 
 MulExp: UnaryExp
-      | MulExp "*" UnaryExp   { $$ = ast_ExpOp(OP_MUL, $1, $3); }
-      | MulExp "/" UnaryExp   { $$ = ast_ExpOp(OP_DIV, $1, $3); }  
-      | MulExp "%" UnaryExp   { $$ = ast_ExpOp(OP_MOD, $1, $3); }
+      | MulExp "*" UnaryExp   { $$ = ast_ExpAdd(OP_MUL, $1, $3); }
+      | MulExp "/" UnaryExp   { $$ = ast_ExpAdd(OP_DIV, $1, $3); }  
+      | MulExp "%" UnaryExp   { $$ = ast_ExpAdd(OP_MOD, $1, $3); }
       ;
 
 UnaryExp: PrimaryExp               
-        | T_IDENT "(" FuncArgs ")" { $$ = ast_ExpCall($1, $3);          }
-        | "+" UnaryExp             { $$ = ast_ExpOp(OP_SUB, $2, 0);     }
-        | "-" UnaryExp             { $$ = ast_ExpOp(OP_ADD, $2, 0);     }
-        | "!" UnaryExp             { $$ = ast_ExpOp(OP_LOG_NOT, $2, 0); }
+        | T_IDENT "(" FuncArgs ")" { $$ = ast_ExpCall($1, $3);           }
+        | "+" UnaryExp             { $$ = ast_ExpAdd(OP_SUB, $2, 0);     }
+        | "-" UnaryExp             { $$ = ast_ExpAdd(OP_ADD, $2, 0);     }
+        | "!" UnaryExp             { $$ = ast_ExpLog(OP_LOG_NOT, $2, 0); }
         ;       
 
 PrimaryExp: "(" Exp ")"   { $$ = $2;              }
@@ -193,7 +193,7 @@ LVal: T_IDENT ArrIdx { $$ = ast_Lval($1, $2); }
     ;
 
 ArrIdx: ArrIdx "[" Exp "]"   { $$ = cons_Ast($3, $1);  }
-      | /* empty */          { $$ = 0;                     }
+      | /* empty */          { $$ = 0;                 }
       ;
 
 FuncArgs: Exp                { $$ = cons_Ast($1, 0);   }

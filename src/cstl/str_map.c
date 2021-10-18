@@ -27,7 +27,7 @@ u32 hash(string s) {
     u32 h = 5381;
     u32 c;
 
-    while (c = *s++) 
+    while ((c = *s++)) 
         h = (h << 5) + h + c;
     
     return (h & 0x00FF0000) >> 16; 

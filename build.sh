@@ -1,7 +1,7 @@
 #!bash
 cd /home/origami/code/bisheng/SysY2021/src
 
-bash ../clear.sh
+bash ../clear.sh normal
 
 cd frontend
 flex lexer.lex

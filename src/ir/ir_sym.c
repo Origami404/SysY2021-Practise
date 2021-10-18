@@ -36,7 +36,8 @@ size_t scope_cnt = 0;
 IR_Scope scope_now;
 
 void ir_info_scope_push(void) {
-    if (scope_now == IR_SCOPE_MAX_SIZE - 1) panic("Too many scope");
+    if (scope_cnt == IR_SCOPE_MAX_SIZE - 1) 
+        panic("Too many scope");
 
     scope_now = ir_scope_creates(scope_now);
     scope_list[scope_cnt++] = scope_now;

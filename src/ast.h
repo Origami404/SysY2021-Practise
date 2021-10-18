@@ -4,18 +4,24 @@
 #include "list.h"
 #include "util.h"
 
-typedef enum Ast_OpType {
+typedef enum Ast_ExpAddType {
     OP_ADD=1, OP_SUB, OP_MUL, OP_DIV, OP_MOD, 
-    OP_EQ,  OP_NOT_EQ, OP_LESS, OP_LESS_EQ, OP_GREATER, OP_GREATER_EQ, 
-    OP_LOG_NOT, OP_LOG_AND, OP_LOG_OR
-} Ast_OpType;
+} Ast_ExpAddType;
+
+typedef enum Ast_ExpRelType {
+    OP_EQ=1, OP_NOT_EQ, OP_LESS, OP_LESS_EQ, OP_GREATER, OP_GREATER_EQ, 
+} Ast_ExpRelType;
+
+typedef enum Ast_ExpLogType {
+    OP_LOG_NOT=1, OP_LOG_AND, OP_LOG_OR
+} Ast_ExpLogType;
 
 typedef enum Ast_NodeType {
     AT_Lval = 1,
 
     // ---- expr ---
-    AT_ExpOp, AT_ExpLval,
-    AT_ExpNum, AT_ExpPutf, AT_ExpCall,
+    AT_ExpAdd, AT_ExpRel, AT_ExpLog,
+    AT_ExpLval, AT_ExpNum, AT_ExpPutf, AT_ExpCall,
 
     // --- stmt ---
     AT_Block, AT_StmtExp, AT_StmtIf, AT_StmtWhile,
@@ -53,10 +59,22 @@ struct Ast_Node {
 
         // --- expr ---
         struct { 
-            Ast_OpType op;
-            Ast_Node arg1;
+            Ast_ExpAddType op;
+            Ast_Node arg1; // Primary Exp
             Ast_Node arg2;
-        } exp_op;
+        } exp_add;
+
+        struct {
+            Ast_ExpRelType op;
+            Ast_Node arg1; // Add Exp
+            Ast_Node arg2;
+        } exp_rel;
+
+        struct {
+            Ast_ExpLogType op;
+            Ast_Node arg1; // Rel Exp
+            Ast_Node arg2;
+        } exp_log;
 
         struct {
             Ast_Node lval;

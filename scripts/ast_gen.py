@@ -29,6 +29,16 @@ def spilt_type_name(code: str) -> tuple[str, str]:
         return (l[0], l[1])
     else: raise RuntimeError(f'Cannot spilt {code}')
 
+def parse_field(field_line: str) -> tuple[str, str]:
+    pattern = re.compile(r"(.*?) (.*?);(.*)")
+    match_obj = pattern.match(field_line.strip())
+    
+    if match_obj:
+        type, name = match_obj.group(1), match_obj.group(2)
+        if isinstance(type, str) and isinstance(name, str):
+            return type, name
+    raise RuntimeError(f"Unable to match field line: {field_line}")
+
 NFS = dict[str, dict[str, str]]
 def get_node_fields(lines: list[str]) -> NFS:
     nfs = {}
@@ -41,8 +51,8 @@ def get_node_fields(lines: list[str]) -> NFS:
         if end_line in lines:
             idx = lines.index(end_line) - 1
             while (line := lines[idx]) != 'struct {':
-                t, n = line[:-1].split(' ')
-                fields[n] = t
+                type, name = parse_field(line)
+                fields[name] = type
                 idx -= 1
 
         nfs[node_name] = { k: v for k, v in reversed(fields.items())}
