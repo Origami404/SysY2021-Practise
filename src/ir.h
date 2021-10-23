@@ -14,14 +14,14 @@ typedef enum {
     IRT_MOD,             // dest = op1 % op2
     IRT_ARG,             // if dest < 4: R(dest) = op1; else: push_stack(op1); 
     IRT_CALL,            // call label
-    IRT_CMP,             // cmp op1, op2
+    // IRT_CMP,             // cmp op1, op2
     IRT_JMP,             // jmp label
-    IRT_JEQ,             // if EQ: jmp label
-    IRT_JNE,             // if NE: jmp label
-    IRT_JLE,             // if LE: jmp label
-    IRT_JLT,             // if LT: jmp label
-    IRT_JGE,             // if GE: jmp label
-    IRT_JGT,             // if GT: jmp label
+    IRT_JEQ,             // if op1 == op2: jmp dest
+    IRT_JNE,             // if op1 != op2: jmp dest
+    IRT_JLE,             // if op1 <= op2: jmp dest
+    IRT_JLT,             // if op1 <  op2: jmp dest
+    IRT_JGE,             // if op1 >= op2: jmp dest
+    IRT_JGT,             // if op1 >  op2: jmp dest
     IRT_AND,             // dest = op1 && op2
     IRT_OR,              // dest = op1 || op2
     IRT_SAL,             // dest = op1 << op2 算数左移
@@ -61,8 +61,8 @@ string ir_temporary();
 // 新增一行 IR
 void ir_code_add(IR_Type type, string dest, string op1, string op2);
 
-// 增加一行 IR 并且暴露出 op1 的位置给第二轮 pass 修改
-string* ir_code_add_with_undetermined_label(IR_Type type);
+// 增加一行 IR 并且暴露出 dest 的位置给第二轮 pass 修改
+string* ir_code_add_with_undetermined_label(IR_Type type, string arg1, string arg2);
 
 // ======================== IR Generation Context ==========================
 
