@@ -154,12 +154,12 @@ LAndExp: EqExp
        | LAndExp "&&" EqExp { $$ = ast_ExpLog(OP_LOG_AND, $1, $3); }
        ;
 
-EqExp: RelExp            { $$ = ast_ExpRel(OP_LOG_ADD, $1,  0); }
+EqExp: RelExp            
      | EqExp "==" RelExp { $$ = ast_ExpRel(OP_EQ,      $1, $3); }
      | EqExp "!=" RelExp { $$ = ast_ExpRel(OP_NOT_EQ,  $1, $3); }
      ; 
 
-RelExp: AddExp             { $$ = ast_ExpRel(OP_REL_ADD,    $1,  0); }
+RelExp: AddExp             
       | RelExp "<"  AddExp { $$ = ast_ExpRel(OP_LESS,       $1, $3); }
       | RelExp "<=" AddExp { $$ = ast_ExpRel(OP_LESS_EQ,    $1, $3); }
       | RelExp ">"  AddExp { $$ = ast_ExpRel(OP_GREATER,    $1, $3); }

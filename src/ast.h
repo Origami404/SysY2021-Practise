@@ -9,11 +9,11 @@ typedef enum Ast_ExpAddType {
 } Ast_ExpAddType;
 
 typedef enum Ast_ExpRelType {
-    OP_EQ=1, OP_NOT_EQ, OP_LESS, OP_LESS_EQ, OP_GREATER, OP_GREATER_EQ, OP_REL_ADD
+    OP_EQ=1, OP_NOT_EQ, OP_LESS, OP_LESS_EQ, OP_GREATER, OP_GREATER_EQ
 } Ast_ExpRelType;
 
 typedef enum Ast_ExpLogType {
-    OP_LOG_NOT=1, OP_LOG_AND, OP_LOG_OR, OP_LOG_REL
+    OP_LOG_NOT=1, OP_LOG_AND, OP_LOG_OR
 } Ast_ExpLogType;
 
 typedef enum Ast_NodeType {
