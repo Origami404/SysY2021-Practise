@@ -228,7 +228,6 @@ IR_Type rel2jmp(Ast_ExpRelType t) {
 
 void cond_gen_rel(Ast_Node n, bool val_should_jmp, vector_t(string *) holes) {
     // assert_type(n, AT_ExpRel);
-
     if (n->type != AT_ExpRel) {
         tac_gen_exp_int(n->exp_rel.arg1);
         vec_add(holes, ir_code_add_with_undetermined_label(IRT_JNE, ir_now->dest, num2str(0)));
@@ -247,30 +246,38 @@ void cond_gen_rel(Ast_Node n, bool val_should_jmp, vector_t(string *) holes) {
     
 }
 
-void cond_gen_log(Ast_Node n, vector_t(string *) true_holes, vector_t(string *) false_holes) {
+void cond_gen_log(Ast_Node n, vector_t(string *) if_holes, vector_t(string *) else_holes) {
+    // 条件生成的第一层. 它接受如下形式的 ExpLog 表达式: 
+    // <Rel> && <Log>    <Rel> || <Log>   !<Rel>    <Rel>
+    // 当 <Rel> && <Log> 时, 我们要在 <Rel> 为假时跳转到 else 分支
+    // 当 <Rel> || <Log> 时, 我们要在 <Rel> 为真时跳转到 if 分支
+    // 当 !<Rel> 时,         我们要在 <Rel> 为真时跳转到 else 分支
+    // 当 <Rel> 时,          我们要在 <Rel> 为假时跳转到 else 分支
+
     // assert_type(n, AT_ExpLog);
 
     if (n->type != AT_ExpLog) {
         // TODO: 消除 "跳到下一条指令" 这种无用的 JMP 指令
-        cond_gen_rel(n, true, true_holes);
+        cond_gen_rel(n, false, else_holes);
         return;
     }
 
     switch (n->exp_log.op) {
         case OP_LOG_AND: {
-            cond_gen_rel(n->exp_log.arg1, false, false_holes);
-            cond_gen_log(n->exp_log.arg2, true_holes, false_holes);
+            cond_gen_rel(n->exp_log.arg1, false, else_holes);
+            cond_gen_log(n->exp_log.arg2, if_holes, else_holes);
         } break;
 
         case OP_LOG_OR: {
             // TODO: 消除 "跳到下一条指令" 这种无用的 JMP 指令
-            cond_gen_rel(n->exp_log.arg1, true, true_holes);
-            cond_gen_log(n->exp_log.arg2, true_holes, false_holes);
+            
+            cond_gen_rel(n->exp_log.arg1, true, if_holes);
+            cond_gen_log(n->exp_log.arg2, if_holes, else_holes);
         } break;
 
         case OP_LOG_NOT: {
             // TODO: 消除 "跳到下一条指令" 这种无用的 JMP 指令
-            cond_gen_rel(n->exp_log.arg1, false, true_holes);
+            cond_gen_rel(n->exp_log.arg1, true, else_holes);
         } break;
 
         default: panic("Unkonwn log op type: %d", n->exp_log.op);
@@ -296,9 +303,13 @@ void stmt_gen_and_fill_holes(Ast_Node n, vector_t(string *) holes) {
 void tac_gen_if(Ast_Node n) {
     assert_type(n, AT_StmtIf);
 
+    // 保存生成if/else分支 IR 后需要修改的跳转语句的 "洞"
     vector_t(string *) if_holes   = create_empty_label_hole();
     vector_t(string *) else_holes = create_empty_label_hole();
 
+    // 生成条件部分
+    // 这部分难点在于, 要做到短路. 
+    // 主要思想是分三层, 分别为 cond_gen_log/cond_gen_rel/tac_gen_exp_int
     cond_gen_log(n->stmt_if.cond, &if_holes, &else_holes);
     
     stmt_gen_and_fill_holes(n->stmt_if.if_clause, if_holes);
