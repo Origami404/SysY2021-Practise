@@ -200,40 +200,47 @@ void tac_gen_stmt(Ast_Node n) {
     }
 }
 
-Ast_ExpRelType adjust_op(Ast_ExpRelType op, bool val_should_jmp) {
-    if (!val_should_jmp) {
+typedef vector_t(string *) HoleVec;
+
+IR_Type adjust_op(Ast_ExpRelType op, bool rev) {
+    if (rev) {
         switch (op) {
-            case OP_EQ:          return OP_NOT_EQ;
-            case OP_NOT_EQ:      return OP_EQ;
-            case OP_GREATER:     return OP_LESS_EQ;
-            case OP_GREATER_EQ:  return OP_LESS;
-            case OP_LESS:        return OP_GREATER_EQ;
-            case OP_LESS_EQ:     return OP_GREATER;
+            case OP_EQ:          return IRT_JNE;
+            case OP_NOT_EQ:      return IRT_JEQ;
+            case OP_GREATER:     return IRT_JLE;
+            case OP_GREATER_EQ:  return IRT_JLT;
+            case OP_LESS:        return IRT_JGE;
+            case OP_LESS_EQ:     return IRT_JGT;
             default: panic("Not a rel op: %d", op);
         }
-    } else return op;
-}
-
-IR_Type rel2jmp(Ast_ExpRelType t) {
-    switch (t) {
-        case OP_EQ:          return IRT_JEQ;
-        case OP_NOT_EQ:      return IRT_JNE;
-        case OP_LESS:        return IRT_JLT;
-        case OP_LESS_EQ:     return IRT_JLE;
-        case OP_GREATER:     return IRT_JGT;
-        case OP_GREATER_EQ:  return IRT_JGE;
-        default: panic("Not an relation op: %d", t);
+    } else {
+        switch (op) {
+            case OP_EQ:          return IRT_JEQ;
+            case OP_NOT_EQ:      return IRT_JNE;
+            case OP_GREATER:     return IRT_JGT;
+            case OP_GREATER_EQ:  return IRT_JGE;
+            case OP_LESS:        return IRT_JLT;
+            case OP_LESS_EQ:     return IRT_JLE;
+            default: panic("Not a rel op: %d", op);
+        }
     }
 }
 
-void cond_gen_rel(Ast_Node n, bool val_should_jmp, vector_t(string *) holes) {
-    // assert_type(n, AT_ExpRel);
+void cond_gen_rel(Ast_Node n, bool rev, vector_t(string *) holes) {
+    // 处理条件表达式
+
+    // 如果这个条件表达式就是一个单独的 ExpAdd, 那么就直接求值
+    // 其等价于 <Add> != 0
     if (n->type != AT_ExpRel) {
         tac_gen_exp_int(n->exp_rel.arg1);
-        vec_add(holes, ir_code_add_with_undetermined_label(IRT_JNE, ir_now->dest, num2str(0)));
+        vec_add(holes, ir_code_add_with_undetermined_label(
+            adjust_op(OP_NOT_EQ, rev), ir_now->dest, num2str(0)));
         return;
     } 
 
+    assert_type(n, AT_ExpRel);
+
+    // 否则, 正常地按条件表达式判断
     tac_gen_exp_int(n->exp_rel.arg1);
     string const a = ir_now->dest;
 
@@ -242,45 +249,73 @@ void cond_gen_rel(Ast_Node n, bool val_should_jmp, vector_t(string *) holes) {
 
     vec_add(holes, 
         ir_code_add_with_undetermined_label(
-            rel2jmp(adjust_op(n->exp_rel.op, val_should_jmp)), a, b));
+            rel2jmp(adjust_op(n->exp_rel.op, rev)), a, b));
     
 }
 
-void cond_gen_log(Ast_Node n, vector_t(string *) if_holes, vector_t(string *) else_holes) {
-    // 条件生成的第一层. 它接受如下形式的 ExpLog 表达式: 
-    // <Rel> && <Log>    <Rel> || <Log>   !<Rel>    <Rel>
-    // 当 <Rel> && <Log> 时, 我们要在 <Rel> 为假时跳转到 else 分支
-    // 当 <Rel> || <Log> 时, 我们要在 <Rel> 为真时跳转到 if 分支
-    // 当 !<Rel> 时,         我们要在 <Rel> 为真时跳转到 else 分支
-    // 当 <Rel> 时,          我们要在 <Rel> 为假时跳转到 else 分支
 
-    // assert_type(n, AT_ExpLog);
+HoleVec cond_gen(Ast_Node n, bool has_not, HoleVec A, HoleVec B) {
+    // 此函数是条件生成系列的第一层, 它负责拆开所有的逻辑表达式, 并调用下一层关系表达式的生成函数
+    /* 经过分析, 发现所有可能的情况只有下面八种: 
+     * (其中 <L> 和 <R> 为逻辑表达式/关系表达式, A/B 代表 if/else 分支的地址)
+     * (比如 if <L> && <R> : goto <A> (B) 意为 "如果 <L> 且 <R> 成立, 那么去 A; (否则去 B)")
+     * (之所以 "else分支" 以括号表示, 是因为去向 "else分支" 的 JMP 指令应该只在条件的 IR 的最后生成而非每一次判断子表达式都生成)
+     * (但是作为递归这个信息又必须保留, 所以以括号表示. 在代码中 我并没有让函数"确定自己是最后的表达式", 而是让函数返回 "else分支")
+     * (通过只返回后面的语句的 "else分支" 来实现 "确定自己是最后的" 这种功能)
+     * 
+     * (1) if <L> && <R> : goto <A>   (B)
+     *          ==> ifnot <L> : goto <B>   (A)
+     *              ifnot <R> : goto <B>   (A)
+     * 
+     * (2) if <L> || <R> : goto <A>   (B)
+     *          ==> if <L> : goto <A>   (B)
+     *              if <R> : goto <A>   (B)
+     * 
+     * (3) if !<L> : goto <A>   (B)
+     *          ==> ifnot <L> : goto <A>   (B)
+     * 
+     * (4) if <Rel> : goto <A>   (B)
+     *          ==> 调用 cond_gen_rel, rev = false
+     * 
+     * 
+     * (5) ifnot <L> && <R> : goto <A>   (B)
+     *          ==> ifnot <L> : goto <A>   (B)
+     *              ifnot <R> : goto <A>   (B)
+     * 
+     * (6) ifnot <L> || <R> : goto <A>   (B)
+     *          ==> if <L> : goto <B>   (A)
+     *              if <R> : goto <B>   (A)
+     * 
+     * (7) ifnot !<L> : goto <A>   (B)
+     *          ==> if <L> : goto <A>   (B)
+     * 
+     * (8) ifnot <Rel> : goto <A>   (B)
+     *          ==> 调用 cond_gen_rel, rev = true
+     * 
+     * 总结上表可知, 只有当 (if &&) 或者 (ifnot ||) 的时候, 才需要切换 if/ifnot 并且交换 A/B
+     */
 
+    // 首先处理情况 4/8, 即表达式就是 <Rel> 的情况
     if (n->type != AT_ExpLog) {
-        // TODO: 消除 "跳到下一条指令" 这种无用的 JMP 指令
-        cond_gen_rel(n, false, else_holes);
-        return;
+        cond_gen_rel(n, has_not, A);
+        return B;
     }
 
-    switch (n->exp_log.op) {
-        case OP_LOG_AND: {
-            cond_gen_rel(n->exp_log.arg1, false, else_holes);
-            cond_gen_log(n->exp_log.arg2, if_holes, else_holes);
-        } break;
+    assert_type(n, AT_ExpLog);
+    Ast_ExpLogType const op = n->exp_log.op;
 
-        case OP_LOG_OR: {
-            // TODO: 消除 "跳到下一条指令" 这种无用的 JMP 指令
-            
-            cond_gen_rel(n->exp_log.arg1, true, if_holes);
-            cond_gen_log(n->exp_log.arg2, if_holes, else_holes);
-        } break;
+    // 接着处理情况 3/7, 即 if/ifnot !<L> 的情况
+    if (op == OP_LOG_NOT) {
+        return cond_gen(n->exp_log.arg1, !has_not, A, B);
+    }
 
-        case OP_LOG_NOT: {
-            // TODO: 消除 "跳到下一条指令" 这种无用的 JMP 指令
-            cond_gen_rel(n->exp_log.arg1, true, else_holes);
-        } break;
-
-        default: panic("Unkonwn log op type: %d", n->exp_log.op);
+    // 然后处理情况 1/2/5/6
+    if (has_not ^ (op == OP_LOG_AND)) {
+        cond_gen(n->exp_log.arg1, !has_not, B, A);
+        return cond_gen(n->exp_log.arg2, !has_not, B, A);
+    } else {
+        cond_gen(n->exp_log.arg1, has_not, A, B);
+        return cond_gen(n->exp_log.arg2, has_not, A, B);
     }
 }
 
@@ -304,101 +339,29 @@ void tac_gen_if(Ast_Node n) {
     assert_type(n, AT_StmtIf);
 
     // 保存生成if/else分支 IR 后需要修改的跳转语句的 "洞"
-    vector_t(string *) if_holes   = create_empty_label_hole();
-    vector_t(string *) else_holes = create_empty_label_hole();
+    HoleVec if_holes   = create_empty_label_hole();
+    HoleVec else_holes = create_empty_label_hole();
 
     // 生成条件部分
     // 这部分难点在于, 要做到短路. 
-    // 主要思想是分三层, 分别为 cond_gen_log/cond_gen_rel/tac_gen_exp_int
-    cond_gen_log(n->stmt_if.cond, &if_holes, &else_holes);
+    // 主要思想是分三层, 分别为 cond_gen/cond_gen_rel/tac_gen_exp_int
+    // 详见对应函数的注释
+    HoleVec last = cond_gen(n->stmt_if.cond, false, if_holes, else_holes);
+    vec_add(last, ir_code_add_with_undetermined_label(IRT_JMP, 0, 0));
     
+    // 生成 if 部分的 IR, 并且在 if 后面加一个跳转到最后的语句
     stmt_gen_and_fill_holes(n->stmt_if.if_clause, if_holes);
     string *end = ir_code_add_with_undetermined_label(IRT_JMP, 0, 0);
 
+    // 生成 else 部分的 IR
     stmt_gen_and_fill_holes(n->stmt_if.else_clause, else_holes);
-    *end = num2str(ir_now_offset);
+
+    // 在最后补上跳转到 if语句 结束的洞 
+    *end = num2str(ir_now_offset + 1);
 
     vec_destory(if_holes);
     vec_destory(else_holes);
 }
-
-
-// void gen_exp_cond_with_jmp(Ast_Node exp, vector_t(string *) *holes) {
-//     // 生成两个参数的值
-//     tac_gen_exp_int(exp->exp_op.arg1);
-//     string const a1 = ir_now->dest;
-
-//     tac_gen_exp_int(exp->exp_op.arg2);
-//     string const a2 = ir_now->dest;
-
-//     // 根据关系符的类型来求出什么时候应该跳转到别的部分
-//     ir_code_add(IRT_CMP, 0, a1, a2);
-//     IR_Type const neg_ir_type = rel_op_to_negative_ir(exp->exp_op.op);
-//     vec_add(*holes, ir_code_add_with_undetermined_label(neg_ir_type));
-// }
-
-// void tac_gen_stmt_if(Ast_Node n) {
-//     assert_type(n, AT_StmtIf);
-
-//     Ast_Node const cond = n->stmt_if.cond;
-    
-//     // TODO: init
-//     vector_t(string *) if_holes;
-//     vector_t(string *) else_holes;
-    
-//     switch (cond->type) {
-//         case AT_ExpOp: {
-//             Ast_OpType const op = cond->exp_op.op;
-//             if (is_int(op)) {
-//                 // 按正常表达式求值并判 0
-//                 goto gen_exp;
-//             } else if (is_relation(op)) {
-//                 gen_exp_cond_with_jmp(cond, &else_holes);
-//             } else if (is_logic(op)) {
-//                 switch (op) {
-//                     case OP_LOG_NOT: 
-                        
-//                     case OP_LOG_AND:
-//                     case OP_LOG_OR: 
-//                     default: panic("Not a logic op type: %d", op);
-//                 }
-//             } else panic("Unknown OP type: %d", op);
-
-//         } break;
-
-//         case AT_ExpNum: {
-//             int const num = cond->exp_num.val;
-
-//             // 直接做死代码优化 跳过正常的两段代码生成
-//             tac_gen_stmt(num ? n->stmt_if.if_clause : n->stmt_if.else_clause);
-//             goto clear_up;   
-//         } break;
-
-//         case AT_ExpCall: // fall down
-//         case AT_ExpLval: {
-//         gen_exp: 
-//             // 计算出表达式的值
-//             tac_gen_exp_int(n);
-
-//             // 比较并生成跳转指令
-//             ir_code_add(IRT_CMP, 0, ir_now->dest, num2str(0));
-
-//             // 如果等于 0 就直接跳转到 else
-//             vec_add(else_holes, ir_code_add_with_undetermined_label(IRT_JEQ));
-//         } break;
-
-        
-//     }
-
-//    gen_stmt_and_fill_holes(n->stmt_if.if_clause, &if_holes);
-//    string * const end_hole = ir_code_add_with_undetermined_label(IRT_JMP);
-//    gen_stmt_and_fill_holes(n->stmt_if.else_clause, &else_holes);
-//    *end_hole = num2str(ir_now_offset + 1);
-
-// clear_up:
-//     vec_destory(if_holes);
-//     vec_destory(else_holes);
-// }
 
 // void tac_gen_stmt(Ast_Node n) {
 //     assert_type_stmt(n);
