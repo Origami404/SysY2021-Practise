@@ -184,24 +184,66 @@ void tac_gen_block(Ast_Node n) {
 
 void tac_gen_stmt(Ast_Node n) {
     assert_type_stmt(n);
-    // TODO
     
     switch (n->type) {
-        case AT_Block: tac_gen_block(n); break;
-        case AT_StmtIf: tac_gen_if(n); break;
-        case AT_StmtWhile: 
-        case AT_StmtAssign:
-        case AT_StmtBreak:
-        case AT_StmtContinue:
-        case AT_StmtReturn: 
-        case AT_StmtExp: tac_gen_exp_int(n->stmt_exp.exp); break;
-        case AT_StmtEmpty: break;
+        case AT_StmtIf: { 
+            tac_gen_stmt_if(n); 
+        } break;
+
+        case AT_StmtWhile:  {
+            tac_gen_stmt_while(n);
+        } break;
+
+        case AT_StmtBreak: {
+            vec_add(ir_info_get_nearest_while_end(), 
+                ir_code_add_with_undetermined_label(IRT_JMP, 0, 0));
+        } break;
+
+        case AT_StmtContinue: {
+            vec_add(ir_info_get_nearest_while_start(),
+                ir_code_add_with_undetermined_label(IRT_JMP, 0, 0));
+        } break;
+
+        case AT_StmtEmpty: {
+            // Do nothing;
+        } break;
+
+        case AT_Block: { 
+            tac_gen_block(n); 
+        } break; 
+
+        case AT_StmtExp: {
+            tac_gen_exp_int(n->stmt_exp.exp);
+        } break;
+
+        case AT_StmtReturn: {
+            if (n->stmt_return.exp) {
+                tac_gen_exp_int(n->stmt_return.exp);
+                ir_code_add(IRT_RET, 0, ir_now->dest, 0);
+            } else {
+                ir_code_add(IRT_RET, 0, 0, 0);
+            }
+        } break;
+
+        case AT_StmtAssign: {
+            Ast_Node const lval = n->stmt_assign.lval;
+            
+            tac_gen_exp_int(n->stmt_assign.exp);
+            string const exp_name = ir_now->dest;
+
+            if (lval_is_array(lval)) {
+                tac_gen_lval_addr(lval);
+                ir_code_add(IRT_STORE, lval->lval.name, ir_now->dest, exp_name);
+            } else {
+                ir_code_add(IRT_MOV, lval->lval.name, exp_name, 0);
+            }
+        } break;
         default: panic("Unkonwn stmt type: %d", n->type);
     }
 }
 
-typedef vector_t(string *) HoleVec;
 
+// 根据 ExpRel 的 op 以及是否有 rev 来获得对应的 IR_Type
 IR_Type adjust_op(Ast_ExpRelType op, bool rev) {
     if (rev) {
         switch (op) {
@@ -252,7 +294,6 @@ void cond_gen_rel(Ast_Node n, bool rev, vector_t(string *) holes) {
             rel2jmp(adjust_op(n->exp_rel.op, rev)), a, b));
     
 }
-
 
 HoleVec cond_gen(Ast_Node n, bool has_not, HoleVec A, HoleVec B) {
     // 此函数是条件生成系列的第一层, 它负责拆开所有的逻辑表达式, 并调用下一层关系表达式的生成函数
@@ -319,23 +360,46 @@ HoleVec cond_gen(Ast_Node n, bool has_not, HoleVec A, HoleVec B) {
     }
 }
 
-vector create_empty_label_hole(void) {
-    return vec_create((data_spec){ 0, 0, sizeof(string *), 0 });
+void fill_holes(size_t pos, HoleVec holes) {
+    size_t const len = vec_len(holes);
+    for (size_t i = 0; i < len; i++) {
+        *(string *)vec_get(holes, i) = num2str(pos);
+    }
 }
 
-void stmt_gen_and_fill_holes(Ast_Node n, vector_t(string *) holes) {
+void stmt_gen_and_fill_holes(Ast_Node n, HoleVec holes) {
     assert_type_stmt(n);
 
     size_t const label = ir_now_offset + 1;
     tac_gen_stmt(n);
-
-    size_t const len = vec_len(holes);
-    for (size_t i = 0; i < len; i++) {
-        *(string *)vec_get(holes, i) = num2str(label);
-    }
+    fill_holes(label, holes);
 }
 
-void tac_gen_if(Ast_Node n) {
+vector create_empty_label_hole(void) {
+    return vec_create((data_spec){ 0, 0, sizeof(string *), 0 });
+}
+
+void tac_gen_stmt_while(Ast_Node n) {
+    assert_type(n, AT_StmtWhile);
+
+    HoleVec start = create_empty_label_hole(); 
+    HoleVec body  = create_empty_label_hole();
+    HoleVec end   = create_empty_label_hole();
+
+    ir_info_push_while(start, end);
+    size_t const start_pos = ir_now_offset;
+
+    cond_gen(n->stmt_while.cond, false, body, end);
+    stmt_gen_and_fill_holes(n->stmt_while.body, body);
+    vec_add(start, ir_code_add_with_undetermined_label(IRT_JMP, 0, 0));
+
+    fill_holes(start_pos, start);
+    fill_holes(ir_now_offset + 1, end);
+
+    ir_info_pop_while();
+}
+
+void tac_gen_stmt_if(Ast_Node n) {
     assert_type(n, AT_StmtIf);
 
     // 保存生成if/else分支 IR 后需要修改的跳转语句的 "洞"

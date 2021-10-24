@@ -71,8 +71,13 @@ string* ir_code_add_with_undetermined_label(IR_Type type, string arg1, string ar
 void ir_info_scope_push(void);
 void ir_info_scope_pop(void);
 
-void ir_info_mark_nearest_while(void);
-string ir_info_get_nearest_while(void);
+typedef vector_t(string *) HoleVec;
+
+// 标记最近的 while
+void ir_info_push_while(HoleVec start, HoleVec end);
+void ir_info_pop_while(void);
+HoleVec ir_info_get_nearest_while_start(void);
+HoleVec ir_info_get_nearest_while_end(void);
 
 // 变量信息
 // 不是指针类型, 不用 typedef
