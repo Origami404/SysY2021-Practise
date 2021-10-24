@@ -25,13 +25,15 @@ typedef uint64_t u64;
 void _Noreturn _panic(char const *file, int line, char const *fmt, ...);
 
 #ifdef DEBUG
-#define debug(...) _debug(__FILE__, __LINE__, __VA_ARGS__) 
-#define debug_do(stmt) stmt 
-#define assert(stmt) do { if (stmt) ; else panic("Assert: \"" #stmt "\" fail."); } while (0)
+#   define debug(...) _debug(__FILE__, __LINE__, __VA_ARGS__) 
+#   define debug_do(stmt) stmt 
+#   define assert_t(stmt, prompt) do { if (stmt) ; else panic("Assert: \"" #stmt "\" fail: " prompt "."); } while (0)
+#   define assert(stmt) assert_t(stmt, "<empty>")
 #else
-#define debug(...) 
-#define debug_do(stmt) 
-#define assert(stmt) 
+#   define debug(...) 
+#   define debug_do(stmt) 
+#   define assert_t(stmt, prompt)
+#   define assert(stmt) 
 #endif
 
 void _debug(char const *file, int line, char const *fmt, ...);
