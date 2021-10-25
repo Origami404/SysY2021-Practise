@@ -11,11 +11,11 @@ static IR_VarInfo info_dup(struct IR_VarInfo info) {
 
 typedef str_map IR_SymTab;
 
-inline IR_SymTab ir_tab_create(void) { return map_create(); }
-inline static void ir_tab_add(IR_SymTab tab, string name, struct IR_VarInfo info) { 
+static inline IR_SymTab ir_tab_create(void) { return map_create(); }
+static inline void ir_tab_add(IR_SymTab tab, string name, struct IR_VarInfo info) { 
     map_set(tab, name, info_dup(info)); 
 }
-inline static struct IR_VarInfo ir_tab_get(IR_SymTab tab, string name) {
+static inline struct IR_VarInfo ir_tab_get(IR_SymTab tab, string name) {
     return *((IR_VarInfo)map_get(tab, name));
 }
 
