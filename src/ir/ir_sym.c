@@ -19,6 +19,8 @@ static inline struct IR_VarInfo ir_tab_get(IR_SymTab tab, string name) {
     return *((IR_VarInfo)map_get(tab, name));
 }
 
+
+// IR_Scope
 typedef struct IR_Scope {
     IR_SymTab sym_tab;
     struct IR_Scope *upper;
@@ -46,6 +48,7 @@ void ir_info_scope_push(void) {
 void ir_info_scope_pop(void) {
     scope_now = scope_now->upper;
 }
+
 
 void ir_info_var_set(string name, struct IR_VarInfo info) {
     ir_tab_add(scope_now->sym_tab, name, info);
