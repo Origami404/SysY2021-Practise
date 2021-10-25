@@ -81,3 +81,27 @@ string ir_temporary(void) {
     return String(buf);
 }
 
+// While support
+static HoleVec ir_while_start[IR_SCOPE_MAX_SIZE];
+static HoleVec ir_while_end[IR_SCOPE_MAX_SIZE];
+static size_t while_cnt = 0;
+
+void ir_while_push(HoleVec start, HoleVec end) {
+    ir_while_start[while_cnt] = start;
+    ir_while_end[while_cnt] = end;
+    while_cnt += 1;
+}
+
+void ir_while_pop(void) {
+    while_cnt -= 1;
+}
+
+HoleVec ir_while_get_start(void) {
+    assert(while_cnt > 0);
+    return ir_while_start[while_cnt - 1];
+}
+
+HoleVec ir_while_get_end(void) {
+    assert(while_cnt > 0);
+    return ir_while_end[while_cnt - 1];
+}
