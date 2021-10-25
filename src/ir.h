@@ -74,10 +74,10 @@ void ir_info_scope_pop(void);
 typedef vector_t(string *) HoleVec;
 
 // 标记最近的 while
-void ir_info_push_while(HoleVec start, HoleVec end);
-void ir_info_pop_while(void);
-HoleVec ir_info_get_nearest_while_start(void);
-HoleVec ir_info_get_nearest_while_end(void);
+void ir_while_push(HoleVec start, HoleVec end);
+void ir_while_pop(void);
+HoleVec ir_while_get_start(void);
+HoleVec ir_while_get_end(void);
 
 // 变量信息
 // 不是指针类型, 不用 typedef
