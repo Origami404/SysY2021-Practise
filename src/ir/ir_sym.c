@@ -55,3 +55,29 @@ struct IR_VarInfo ir_info_var_get(string name) {
     return ir_tab_get(scope_now->sym_tab, name);
 }
  
+
+// IR
+struct IR_Code ir_list[IR_IR_MAX_SIZE];
+IR_Code ir_now = ir_list;
+size_t ir_now_offset = 0;
+
+void ir_code_add(IR_Type type, string dest, string arg1, string arg2) {
+    *ir_now = (struct IR_Code) { type, dest, arg1, arg2 };
+
+    ir_now += 1;
+    ir_now_offset += 1;
+}
+
+string* ir_code_add_with_undetermined_label(IR_Type type, string arg1, string arg2) {
+    ir_code_add(type, 0, arg1, arg2);
+    return &(ir_now->dest);
+}
+
+string ir_temporary(void) {
+    static int cnt = 1;
+
+    char buf[16];
+    sprintf(buf, "%%%d", cnt++);
+    return String(buf);
+}
+
