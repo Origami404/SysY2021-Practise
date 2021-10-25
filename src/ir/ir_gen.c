@@ -15,8 +15,27 @@
 #define assert_type(n, t) \
     assert_s(n->type == t, "not target type: " #t)
 
+string num2str(int num) {
+    char buf[16];
+    sprintf(buf, "%d", num);
+    return String(buf);
+}
+
+int eval_const_exp(Ast_Node n);
+int eval_const_op(Ast_Node n);
+
+void tac_gen_exp_int(Ast_Node n);
+void tac_gen_lval_addr(Ast_Node n);
+
+void tac_gen_block(Ast_Node n);
+void tac_gen_decl(Ast_Node n);
+
+void tac_gen_stmt(Ast_Node n);
+void tac_gen_stmt_if(Ast_Node n);
+void tac_gen_stmt_while(Ast_Node n);
 
 // ===== 常量表达式求值 =====
+
 int eval_const_op(Ast_Node n) {
     assert_type(n, AT_ExpAdd);
 
@@ -38,7 +57,7 @@ int eval_const_exp(Ast_Node n) {
 
     switch (n->type) {
         case AT_ExpAdd:  return eval_const_op(n);
-        case AT_ExpNum:  return n->exp_num.val;
+        case AT_ExpNum:  return (int)strtol(n->exp_num.val, 0, 10);
         case AT_ExpLval: return ir_info_var_get(n->exp_lval.lval->lval.name).init;
         default: panic("Unsupport type: %d", n->type);
     }
@@ -177,9 +196,19 @@ void tac_gen_block(Ast_Node n) {
 
     ir_info_scope_push();
     for (Ast_List p = n->block.items; p; p = p->cdr) {
-        tac_gen_stmt(p->car);
+        Ast_Node const n = p->car;
+        if (n->type == AT_Decl) {
+            tac_gen_decl(n);
+        } else {
+            tac_gen_stmt(n);
+        }
     }
     ir_info_scope_pop();
+}
+
+void tac_gen_decl(Ast_Node n) {
+    assert_type(n, AT_Decl);
+    // TODO
 }
 
 void tac_gen_stmt(Ast_Node n) {
@@ -195,12 +224,12 @@ void tac_gen_stmt(Ast_Node n) {
         } break;
 
         case AT_StmtBreak: {
-            vec_add(ir_info_get_nearest_while_end(), 
+            vec_add(ir_while_get_end(), 
                 ir_code_add_with_undetermined_label(IRT_JMP, 0, 0));
         } break;
 
         case AT_StmtContinue: {
-            vec_add(ir_info_get_nearest_while_start(),
+            vec_add(ir_while_get_start(),
                 ir_code_add_with_undetermined_label(IRT_JMP, 0, 0));
         } break;
 
@@ -291,7 +320,7 @@ void cond_gen_rel(Ast_Node n, bool rev, vector_t(string *) holes) {
 
     vec_add(holes, 
         ir_code_add_with_undetermined_label(
-            rel2jmp(adjust_op(n->exp_rel.op, rev)), a, b));
+            adjust_op(n->exp_rel.op, rev), a, b));
     
 }
 
@@ -386,7 +415,7 @@ void tac_gen_stmt_while(Ast_Node n) {
     HoleVec body  = create_empty_label_hole();
     HoleVec end   = create_empty_label_hole();
 
-    ir_info_push_while(start, end);
+    ir_while_push(start, end);
     size_t const start_pos = ir_now_offset;
 
     cond_gen(n->stmt_while.cond, false, body, end);
@@ -396,7 +425,7 @@ void tac_gen_stmt_while(Ast_Node n) {
     fill_holes(start_pos, start);
     fill_holes(ir_now_offset + 1, end);
 
-    ir_info_pop_while();
+    ir_while_pop();
 }
 
 void tac_gen_stmt_if(Ast_Node n) {
